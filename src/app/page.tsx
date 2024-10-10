@@ -1,13 +1,44 @@
-import Races from "@/components/races";
-import { siteConfig } from "@/config/site";
 import Link from "next/link";
+
 import { races, galleries } from "#site/content";
 import Marquee from "@/components/magicui/Marquee";
 import PhotoCard from "@/components/PhotoCard";
+import { siteConfig } from "@/config/site";
 import { RdPhoto } from "@/lib/veliteUtils";
+import Races from "@/components/races";
+
+export function generateMetadata() {
+  const title = siteConfig.title;
+  const description = siteConfig.description;
+  const baseURL = siteConfig.baseURL;
+
+  const ogImage = `${baseURL}/og?title=${encodeURIComponent(title)}`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      url: baseURL,
+      images: [
+        {
+          url: ogImage,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage],
+    },
+  };
+}
 
 export default function Home() {
-  console.log({ galleries });
   const imageCount = galleries?.reduce((acc, gallery) => {
     return acc + gallery.images.length;
   }, 0);

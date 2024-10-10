@@ -1,14 +1,40 @@
 import React from "react";
-import { Metadata } from "next";
 import PageHeader from "@/components/page-header";
 import { races as allRaces } from "#site/content";
 import Image from "next/image";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
+import { siteConfig } from "@/config/site";
 
-export const metadata: Metadata = {
-  title: "Races",
-};
+export function generateMetadata() {
+  const baseURL = siteConfig.baseURL;
+  const title = `比賽 | Races | ${siteConfig.title}`;
+  const description = siteConfig.description;
+  const ogImage = `${baseURL}/og?title=${encodeURIComponent(title)}`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      url: `${baseURL}/races`,
+      images: [
+        {
+          url: ogImage,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage],
+    },
+  };
+}
 
 export default function BlogPage() {
   const years = [...new Set(allRaces.map((blog) => blog.year))];
@@ -63,7 +89,7 @@ export default function BlogPage() {
                 ))}
             </div>
           ) : (
-            <p>No Blogs found</p>
+            <p>No Races found</p>
           )}
         </div>
       ))}

@@ -32,17 +32,37 @@ async function getBlogFromParams(params: BlogPageItemProps["params"]) {
 export async function generateMetadata({
   params,
 }: BlogPageItemProps): Promise<Metadata> {
-  const blog = await getBlogFromParams(params);
+  const baseURL = siteConfig.baseURL;
+  const post = await getBlogFromParams(params);
 
-  if (!blog) {
+  if (!post) {
     return {};
   }
 
+  console.log(post);
+  let { title, image, description, date } = post;
+  let ogImage = `${baseURL}/og?title=${title}`;
+
   return {
-    title: blog.title,
-    description: blog.description,
-    authors: {
-      name: blog.author,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "article",
+      url: `${baseURL}/races/${post.slug}`,
+      images: [
+        {
+          url: ogImage,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage],
     },
   };
 }
@@ -115,7 +135,7 @@ export default async function BlogPageItem({ params }: BlogPageItemProps) {
             className={cn(buttonVariants({ variant: "ghost" }))}
           >
             <ChevronLeft className="mr-2 size-4" />
-            See all Blogs
+            See all Races
           </Link>
         </div>
       </div>
