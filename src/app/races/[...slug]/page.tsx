@@ -40,7 +40,7 @@ export async function generateMetadata({
   }
 
   console.log(post);
-  let { title, image, description, date } = post;
+  let { title, description } = post;
   let ogImage = `${baseURL}/og?title=${title}`;
 
   return {
