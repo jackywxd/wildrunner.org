@@ -41,3 +41,5 @@ next-env.d.ts
 .velite
 public/static
 public/gallery
+public/images
+src/content/gallery
