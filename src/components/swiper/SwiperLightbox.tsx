@@ -15,73 +15,73 @@ import min from "lodash/min";
 import { motion, AnimatePresence } from "framer-motion";
 import { transitionApple } from "@/styles/framer-motion";
 import { Icon } from "@iconify-icon/react";
-import { cn } from "@/lib/cn";
-import dayjs from "dayjs";
-import customParseFormat from "dayjs/plugin/customParseFormat";
-import { formatDateTime } from "@//store/day";
+// import { cn } from "@/lib/cn";
+// import dayjs from "dayjs";
+// import customParseFormat from "dayjs/plugin/customParseFormat";
+// import { formatDateTime } from "@//store/day";
 
-function ExifPanel(props: { showExif: boolean; rdPhoto: RdPhoto }) {
-  dayjs.extend(customParseFormat);
-  const format = "YYYY:MM:DD HH:mm:ss";
-  let photoDateTime = "未知拍摄时间";
-  if (props.rdPhoto?.exif?.exif?.DateTimeOriginal?.description) {
-    photoDateTime = formatDateTime(
-      props.rdPhoto.exif?.exif?.DateTimeOriginal?.description,
-      format
-    );
-  }
-  let photoTimeZone = "未知时区";
-  if (props.rdPhoto?.exif?.exif?.OffsetTimeOriginal?.description) {
-    const match =
-      props.rdPhoto.exif?.exif?.OffsetTimeOriginal?.description.match(
-        /^([+-])(\d{2}):(\d{2})$/
-      );
-    photoTimeZone = `UTC${match![1]}${match![2]}`;
-  }
+// function ExifPanel(props: { showExif: boolean; rdPhoto: RdPhoto }) {
+//   dayjs.extend(customParseFormat);
+//   const format = "YYYY:MM:DD HH:mm:ss";
+//   let photoDateTime = "未知拍摄时间";
+//   if (props.rdPhoto?.exif?.exif?.DateTimeOriginal?.description) {
+//     photoDateTime = formatDateTime(
+//       props.rdPhoto.exif?.exif?.DateTimeOriginal?.description,
+//       format
+//     );
+//   }
+//   let photoTimeZone = "未知时区";
+//   if (props.rdPhoto?.exif?.exif?.OffsetTimeOriginal?.description) {
+//     const match =
+//       props.rdPhoto.exif?.exif?.OffsetTimeOriginal?.description.match(
+//         /^([+-])(\d{2}):(\d{2})$/
+//       );
+//     photoTimeZone = `UTC${match![1]}${match![2]}`;
+//   }
 
-  return (
-    <div
-      className={cn(
-        "rd-card fixed backdrop-blur-bg top-[60px] right-[16px] max-w-[300px] max-h-[calc(100vh-120px)] z-[999999] p-4 flex flex-col gap-4",
-        props.showExif ? "" : "translate-x-[calc(100%+20px)]"
-      )}
-    >
-      <div className="flex flex-row gap-2 items-center">
-        <span className="text-lg mx-0.5 icon-[formkit--datetime]" />
-        {photoDateTime}, {photoTimeZone}
-      </div>
-      <div className="flex flex-row gap-2 items-center">
-        <span className="text-xl icon-[fluent--slide-size-24-regular]" />
-        {props.rdPhoto?.width} x {props.rdPhoto?.height}
-      </div>
-      <div className="flex flex-row gap-2 items-center">
-        <span className="text-xl icon-[heroicons--camera]" />
-        {props.rdPhoto?.exif?.exif?.Make?.description ?? "未知制造商"}
-        {`, `}
-        {props.rdPhoto?.exif?.exif?.Model?.description ?? "未知型号"}
-      </div>
-      <div className="flex flex-row gap-2 items-center">
-        <span className="text-xl icon-[iconoir--lens]" />
-        {props.rdPhoto?.exif?.exif?.LensModel?.description ?? "未知镜头"}
-      </div>
-      <div className="flex flex-row gap-2 items-center">
-        <span className="text-2xl -mx-0.5 icon-[circum--ruler]" />
-        {props.rdPhoto?.exif?.exif?.FocalLength?.description ?? "未知焦距"}
-      </div>
-      <div className="flex flex-row gap-2 items-center">
-        <span className="text-2xl -mx-0.5 icon-[material-symbols-light--shutter-speed-outline-rounded]" />
-      </div>
-      <div className="flex flex-row gap-2 items-center">
-        <span className="text-xl icon-[ph--aperture-light]" />
-        {props.rdPhoto?.exif?.exif?.FNumber?.description ?? "未知光圈"}
-      </div>
-      <div className="flex flex-row gap-2 items-center">
-        <span className="text-xl icon-[carbon--iso]" />
-        {props.rdPhoto?.exif?.exif?.ISOSpeedRatings?.description ?? "未知 ISO"}
-      </div>
-    </div>
-  );
-}
+//   return (
+//     <div
+//       className={cn(
+//         "rd-card fixed backdrop-blur-bg top-[60px] right-[16px] max-w-[300px] max-h-[calc(100vh-120px)] z-[999999] p-4 flex flex-col gap-4",
+//         props.showExif ? "" : "translate-x-[calc(100%+20px)]"
+//       )}
+//     >
+//       <div className="flex flex-row gap-2 items-center">
+//         <span className="text-lg mx-0.5 icon-[formkit--datetime]" />
+//         {photoDateTime}, {photoTimeZone}
+//       </div>
+//       <div className="flex flex-row gap-2 items-center">
+//         <span className="text-xl icon-[fluent--slide-size-24-regular]" />
+//         {props.rdPhoto?.width} x {props.rdPhoto?.height}
+//       </div>
+//       <div className="flex flex-row gap-2 items-center">
+//         <span className="text-xl icon-[heroicons--camera]" />
+//         {props.rdPhoto?.exif?.exif?.Make?.description ?? "未知制造商"}
+//         {`, `}
+//         {props.rdPhoto?.exif?.exif?.Model?.description ?? "未知型号"}
+//       </div>
+//       <div className="flex flex-row gap-2 items-center">
+//         <span className="text-xl icon-[iconoir--lens]" />
+//         {props.rdPhoto?.exif?.exif?.LensModel?.description ?? "未知镜头"}
+//       </div>
+//       <div className="flex flex-row gap-2 items-center">
+//         <span className="text-2xl -mx-0.5 icon-[circum--ruler]" />
+//         {props.rdPhoto?.exif?.exif?.FocalLength?.description ?? "未知焦距"}
+//       </div>
+//       <div className="flex flex-row gap-2 items-center">
+//         <span className="text-2xl -mx-0.5 icon-[material-symbols-light--shutter-speed-outline-rounded]" />
+//       </div>
+//       <div className="flex flex-row gap-2 items-center">
+//         <span className="text-xl icon-[ph--aperture-light]" />
+//         {props.rdPhoto?.exif?.exif?.FNumber?.description ?? "未知光圈"}
+//       </div>
+//       <div className="flex flex-row gap-2 items-center">
+//         <span className="text-xl icon-[carbon--iso]" />
+//         {props.rdPhoto?.exif?.exif?.ISOSpeedRatings?.description ?? "未知 ISO"}
+//       </div>
+//     </div>
+//   );
+// }
 
 const SwiperLightbox: React.FC<{
   images: RdPhoto[];
@@ -95,7 +95,7 @@ const SwiperLightbox: React.FC<{
   const [maxH, setMaxH] = useState<number>(0);
   const [isMobile, setIsMobile] = useState<boolean>(true);
   const [lightboxActive, setLightboxActive] = useState<boolean>(false);
-  const [activeIndex, setActiveIndex] = useState<number>(0);
+  // const [activeIndex, setActiveIndex] = useState<number>(0);
   const [showExif, setShowExif] = useState<boolean>(false);
 
   useEffect(() => {
@@ -133,7 +133,7 @@ const SwiperLightbox: React.FC<{
     });
     lightbox.on("contentActivate", ({ content }) => {
       setLightboxActive(true);
-      setActiveIndex(content.index);
+      // setActiveIndex(content.index);
       // swiperRef.current!.swiper.slideToLoop(content.index, 300);
       swiperRef.current!.swiper.slideTo(content.index, 300);
       // setShowExif(true);
@@ -185,10 +185,10 @@ const SwiperLightbox: React.FC<{
           </motion.button>
         )}
       </AnimatePresence>
-      <ExifPanel
+      {/* <ExifPanel
         showExif={showExif}
         rdPhoto={images[(activeIndex + 1) % images.length]}
-      />
+      /> */}
       <div ref={galleryRef}>
         {/*activeIndex={activeIndex}*/}
         <Swiper
