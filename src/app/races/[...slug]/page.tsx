@@ -39,29 +39,31 @@ export async function generateMetadata({
     return {};
   }
 
-  let { title, description, image } = post;
+  let { title, description, image, author } = post;
+  const newTitle = `${title} | ${author}`;
+
   let ogImage = image
     ? `${baseURL}/_next/image?url=${encodeURIComponent(image.src)}&w=1026&q=75`
     : `${baseURL}/og?title=${title}|${post.author ?? ""}`;
 
   return {
-    title,
+    title: newTitle,
     description,
     openGraph: {
-      title,
+      title: newTitle,
       description,
       type: "article",
-      url: `${baseURL}/races/${post.slug}`,
+      url: `${baseURL}/posts/${post.slug}`,
       images: [
         {
           url: ogImage,
-          alt: title,
+          alt: newTitle,
         },
       ],
     },
     twitter: {
       card: "summary_large_image",
-      title,
+      title: newTitle,
       description,
       images: [ogImage],
     },
