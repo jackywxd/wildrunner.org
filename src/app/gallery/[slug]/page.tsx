@@ -4,6 +4,7 @@ import { getGalleryBySlug } from "@/store/velite";
 import { galleries, globals } from "#site/content";
 import { notFound } from "next/navigation";
 import PhotoGallery from "@/app/gallery/_components/PhotoGallery";
+import { siteConfig } from "@/config/site";
 
 interface GalleryDetailPageProps {
   params: {
@@ -11,8 +12,13 @@ interface GalleryDetailPageProps {
   };
 }
 
-export function generateMetadata({ params }: GalleryDetailPageProps): Metadata {
+export async function generateMetadata({
+  params,
+}: GalleryDetailPageProps): Promise<Metadata> {
   const gallery = getGalleryBySlug(params.slug);
+  const baseURL = siteConfig.baseURL;
+
+  let ogImage = `${baseURL}/og?title=${gallery?.name}`;
   if (gallery == null) {
     return {
       title: `错误：找不到相册`,
@@ -23,12 +29,27 @@ export function generateMetadata({ params }: GalleryDetailPageProps): Metadata {
       },
     };
   }
+
+  const title = `${gallery.name} | 相册`;
+  const description = `${gallery.name}”的照片`;
   return {
-    title: `${gallery.name} | 分类`,
-    description: `探索博客相册“${gallery.name}”的照片。| ${globals.metadata.description}`,
+    title,
+    description,
     openGraph: {
-      title: `${gallery.name} | 分类`,
-      description: `探索博客相册“${gallery.name}”的照片。| ${globals.metadata.description}`,
+      title,
+      description,
+      images: [
+        {
+          url: ogImage,
+          alt: gallery?.name,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage],
     },
   };
 }

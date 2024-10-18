@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import NextTopLoader from "nextjs-toploader";
+
 import { Lexend } from "next/font/google";
 import "@/styles/globals.css";
 import { ReactNode } from "react";
@@ -43,6 +45,7 @@ export default function RootLayout({
       >
         <Providers>
           <App>
+            <NextTopLoader showSpinner={false} />
             <PageTransitionEffect>{children}</PageTransitionEffect>
             <PostHogPageView />
             <TailwindIndicator />

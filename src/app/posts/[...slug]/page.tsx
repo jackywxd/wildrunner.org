@@ -1,6 +1,6 @@
 import React from "react";
 import { Metadata } from "next";
-import { races as allBlogs } from "#site/content";
+import { posts as allBlogs } from "#site/content";
 import { cn, formatDate } from "@/lib/utils";
 import "@/styles/mdx.css";
 
@@ -19,7 +19,6 @@ interface BlogPageItemProps {
 
 async function getBlogFromParams(params: BlogPageItemProps["params"]) {
   const slug = params?.slug.join("/");
-
   const blog = allBlogs.find((blog) => blog.slugAsParams === slug);
 
   if (!blog) {
@@ -51,7 +50,7 @@ export async function generateMetadata({
       title,
       description,
       type: "article",
-      url: `${baseURL}/races/${post.slug}`,
+      url: `${baseURL}/posts/${post.slug}`,
       images: [
         {
           url: ogImage,
@@ -80,13 +79,12 @@ export default async function BlogPageItem({ params }: BlogPageItemProps) {
   const blog = await getBlogFromParams(params);
 
   if (!blog) {
-    console.log("not found");
     return {};
   }
 
   return (
     <article className="container relative max-w-3xl py-6 lg:py-10">
-      <div>
+      <>
         {blog.date && (
           <time
             dateTime={blog.date}
@@ -119,27 +117,29 @@ export default async function BlogPageItem({ params }: BlogPageItemProps) {
         )}
 
         {blog.image && (
-          <Image
-            src={blog.image}
-            alt={blog.title}
-            width={720}
-            height={405}
-            priority
-            className="my-8 border bg-muted transition-colors"
-          />
+          <div className="mx-auto my-8 w-1/2 max-w-[720px]">
+            <Image
+              src={blog.image}
+              alt={blog.title}
+              width={720}
+              height={405}
+              priority
+              className="mx-auto"
+            />
+          </div>
         )}
         <Mdx code={blog.body} />
         <hr className="mt-12" />
         <div className="flex justify-center py-6 lg:py-10">
           <Link
-            href="/races"
+            href="/posts"
             className={cn(buttonVariants({ variant: "ghost" }))}
           >
             <ChevronLeft className="mr-2 size-4" />
-            See all Races
+            See all Posts
           </Link>
         </div>
-      </div>
+      </>
     </article>
   );
 }

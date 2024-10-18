@@ -6,7 +6,7 @@ import { Link } from "@/components/transition/react-transition-progress/next";
 import { Icon } from "@iconify-icon/react";
 import SwiperLightbox from "@/components/swiper/SwiperLightbox";
 
-const GalleryPage: NextPage = () => {
+const GalleryPage: NextPage = async () => {
   const featuredImages = galleries.reduce((acc, gallery) => {
     return acc.concat(gallery.images.filter((image) => image.featured));
   }, [] as RdPhoto[]);
@@ -24,6 +24,11 @@ const GalleryPage: NextPage = () => {
         </section>
         {galleries
           .filter((gallery) => gallery.images.length > 0)
+          .sort((a, b) => {
+            const dateA = new Date(a?.created ?? 0);
+            const dateB = new Date(b?.created ?? 0);
+            return dateB.getTime() - dateA.getTime();
+          })
           .map((gallery) => (
             <section key={gallery.slug} className="-mx-content">
               <button className="group btn btn-ghost btn-lg rounded-2xl mb-2 outline-transparent border-none p-0">

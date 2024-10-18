@@ -1,14 +1,33 @@
 import React from "react";
 import { Metadata } from "next";
-import { globals } from "#site/content";
+import { siteConfig } from "@/config/site";
 
 export function generateMetadata(): Metadata {
+  const baseURL = siteConfig.baseURL;
+  const title = `${siteConfig.title} | 相册`;
+  const description = `${siteConfig.description} `;
+  let ogImage = `${baseURL}/og?title=${title}`;
+
   return {
-    title: `相册`,
-    description: `探索摄影作品。| ${globals.metadata.description}`,
+    title,
+    description,
     openGraph: {
-      title: `相册`,
-      description: `探索摄影作品。| ${globals.metadata.description}`,
+      title,
+      description,
+      type: "website",
+      url: `${baseURL}/gallery`,
+      images: [
+        {
+          url: ogImage,
+          alt: description,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage],
     },
   };
 }

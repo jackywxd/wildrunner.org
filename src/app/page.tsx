@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { races, galleries } from "#site/content";
+import { races, galleries, posts } from "#site/content";
 import Marquee from "@/components/magicui/Marquee";
 import PhotoCard from "@/components/PhotoCard";
 import { siteConfig } from "@/config/site";
@@ -47,6 +47,8 @@ export default function Home() {
     return acc.concat(gallery.images.filter((image) => image.featured));
   }, [] as RdPhoto[]);
 
+  const filteredPosts = posts.filter((post) => post.published);
+
   return (
     <main className="container relative max-w-6xl py-6 lg:py-10">
       <section className="space-y-6 pb-8 md:pb-12 md:pt-10 lg:py-32">
@@ -70,20 +72,41 @@ export default function Home() {
           </div>
           <h1 className="text-3xl capitalize sm:text-5xl md:text-6xl lg:text-7xl">
             拥抱狂野，征服赛道 <br></br>
-            <span className="font-code text-primary">Run wild, run free.</span>
+          </h1>
+          <h1 className="text-primary text-3xl capitalize sm:text-5xl md:text-6xl lg:text-7xl">
+            Run wild, run free.
           </h1>
           <p className="max-w-2xl leading-normal text-muted-foreground sm:text-xl sm:leading-8">
             {siteConfig.description}
           </p>
         </div>
       </section>
+      {filteredPosts?.length > 0 && (
+        <>
+          <h2 className="text-l capitalize sm:text-xl md:text-2xl lg:text-3xl text-center">
+            Latest Posts
+          </h2>
+          <section>
+            <Races
+              allRaces={
+                filteredPosts.length < 3
+                  ? filteredPosts
+                  : filteredPosts.splice(0, 2)
+              }
+            />
+          </section>
+        </>
+      )}
+
       <h2 className="text-l capitalize sm:text-xl md:text-2xl lg:text-3xl text-center">
         Latest Races
       </h2>
       <section>
         <Races
           allRaces={races.filter(
-            (race) => race.year === new Date().getFullYear().toString()
+            (race) =>
+              race.year === new Date().getFullYear().toString() &&
+              race.published
           )}
         />
       </section>
@@ -103,20 +126,22 @@ export default function Home() {
               <span className="icon-[heroicons--chevron-right] my-auto" />
             </button>
           </Link>
-          <div className="absolute right-0 overflow-clip rounded-2xl -z-50">
-            <div className="relative rounded-2xl">
-              <Marquee className="h-[135px] [--duration:40s]">
-                {featuredImages.map((image, i) => (
-                  <PhotoCard
-                    key={image.slug}
-                    item={image}
-                    maxWidth={250}
-                    maxHeight={119}
-                  />
-                ))}
-              </Marquee>
+          <>
+            <div className="absolute left-0 right-0 overflow-clip rounded-2xl -z-50">
+              <div className="relative rounded-2xl">
+                <Marquee className="h-[160px] [--duration:240s] overflow-clip">
+                  {featuredImages.map((image, i) => (
+                    <PhotoCard
+                      key={image.slug}
+                      item={image}
+                      maxWidth={250}
+                      maxHeight={119}
+                    />
+                  ))}
+                </Marquee>
+              </div>
             </div>
-          </div>
+          </>
         </div>
       )}
     </main>
