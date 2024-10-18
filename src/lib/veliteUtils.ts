@@ -147,6 +147,93 @@ async function rotateImageBasedOnExif(
   return image;
 }
 
+export const convertToWebP = async (
+  inputPath: string,
+  outputPath: string,
+  file: string
+) => {
+  const filePath = path.join(inputPath, file);
+
+  const outputFilePath = path.join(
+    outputPath,
+    `${path.basename(file, path.extname(file))}.webp`
+  );
+
+  let fileBuffer: Buffer;
+  try {
+    // Read EXIF data
+    fileBuffer = await fs.readFile(filePath);
+  } catch (e) {
+    console.log(`Error reading file ${filePath}:`, e);
+    // get the extension of the file
+    const ext = path.extname(file);
+    // change ext to uppercase
+    const newExt = ext.toUpperCase();
+    // get the new file name
+    const newFileName = path.basename(file, ext) + newExt;
+    // get the new file path
+    const newFilePath = path.join(inputPath, newFileName);
+    // read the new file
+    fileBuffer = await fs.readFile(newFilePath);
+  }
+  let sharpedImage = sharp(fileBuffer);
+  let exifData: ExifReader.ExpandedTags = {};
+  const metadata = await sharpedImage.metadata();
+  // check file extension, if it is svg, skip; if it is not svg, read EXIF
+  if (path.extname(file) !== ".svg") {
+    try {
+      exifData = await ExifReader.load(fileBuffer, {
+        async: true,
+        expanded: true,
+      });
+      // Rotate image based on EXIF orientation
+      sharpedImage = await rotateImageBasedOnExif(
+        sharpedImage,
+        exifData,
+        metadata
+      );
+    } catch (e) {
+      console.log(`Error reading EXIF data for ${filePath}:`, e);
+    }
+  }
+
+  const src = `/${path.posix.format(path.parse(path.relative(staticBasePath, outputFilePath)))}`;
+
+  // Check if the output file already exists
+  if (!(await fileExists(outputFilePath))) {
+    // Convert image to WebP
+    const { width, height } = metadata;
+    let resizeOptions = {};
+    // Maximum edge size
+    const maxEdge = 3840;
+    if (width! > height!) {
+      resizeOptions = { width: maxEdge };
+    } else {
+      resizeOptions = { height: maxEdge };
+    }
+    await sharpedImage
+      .resize(resizeOptions)
+      .webp({ quality: 80 })
+      .toFile(outputFilePath);
+    console.log(`Converted and saved: ${file} -> ${outputFilePath}`);
+  }
+  // console.log(`Processed image: ${filePath}`);
+  const blurDataURL = await generateBlurDataUrl(sharpedImage);
+
+  return {
+    filename: file,
+    src: src,
+    slug: src,
+    featured: false,
+    width: metadata.width!,
+    height: metadata.height!,
+    blurWidth: blurWidth,
+    blurHeight: Math.round((blurWidth / metadata.width!) * metadata.height!),
+    exif: exifData,
+    blurDataURL,
+  };
+};
+
 // Function to convert images to WebP and read EXIF data
 export const convertImagesToWebP = async (
   inputPath: string,
@@ -161,63 +248,9 @@ export const convertImagesToWebP = async (
   await fs.mkdir(outputPath, { recursive: true });
 
   for (const file of imageFiles) {
-    const filePath = path.join(inputPath, file);
-    const outputFilePath = path.join(
-      outputPath,
-      `${path.basename(file, path.extname(file))}.webp`
-    );
-
     try {
-      // Read EXIF data
-      const fileBuffer = await fs.readFile(filePath);
-      let sharpedImage = sharp(fileBuffer);
-      const metadata = await sharpedImage.metadata();
-      const exifData = await ExifReader.load(fileBuffer, {
-        async: true,
-        expanded: true,
-      });
-      // Rotate image based on EXIF orientation
-      sharpedImage = await rotateImageBasedOnExif(
-        sharpedImage,
-        exifData,
-        metadata
-      );
-
-      const src = `/${path.posix.format(path.parse(path.relative(staticBasePath, outputFilePath)))}`;
-      images.push({
-        filename: file,
-        src: src,
-        slug: src,
-        featured: false,
-        width: metadata.width!,
-        height: metadata.height!,
-        blurDataURL: await generateBlurDataUrl(sharpedImage),
-        blurWidth: blurWidth,
-        blurHeight: Math.round(
-          (blurWidth / metadata.width!) * metadata.height!
-        ),
-        exif: exifData,
-      });
-
-      // Check if the output file already exists
-      if (!(await fileExists(outputFilePath))) {
-        // Convert image to WebP
-        const { width, height } = metadata;
-        let resizeOptions = {};
-        // Maximum edge size
-        const maxEdge = 3840;
-        if (width! > height!) {
-          resizeOptions = { width: maxEdge };
-        } else {
-          resizeOptions = { height: maxEdge };
-        }
-        await sharpedImage
-          .resize(resizeOptions)
-          .webp({ quality: 80 })
-          .toFile(outputFilePath);
-        console.log(`Converted and saved: ${file} -> ${outputFilePath}`);
-      }
-      console.log(`Processed image: ${filePath}`);
+      const image = await convertToWebP(inputPath, outputPath, file);
+      images.push(image);
     } catch (error) {
       console.error(`Error processing file ${file}:`, error);
     }
