@@ -1,33 +1,67 @@
 import path from "node:path";
-import { defineCollection, defineConfig, s } from "velite";
+import { defineCollection, defineConfig, Image, s } from "velite";
 import rehypePrettyCode from "rehype-pretty-code";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeSlug from "rehype-slug";
+import fs from "fs/promises";
 
-import { convertImagesToWebP, setFeaturedImages } from "@/lib/veliteUtils";
+import {
+  convertImagesToWebP,
+  convertToWebP,
+  setFeaturedImages,
+} from "@/lib/veliteUtils";
 import { projectRootPath, staticBasePath } from "@/base-path";
 
 const veliteRoot = "src/content";
 
-const computedFields = <T extends { slug: string }>(data: T) => ({
-  ...data,
-  year: data.slug.split("/")
-    ? data.slug.split("/")[1]
-    : new Date().getFullYear().toString(),
-  slugAsParams: data.slug.split("/").slice(1).join("/"),
-});
+const computedFields = async <
+  T extends { slug: string; title: string; image?: Image },
+  K extends { meta: { data: any } },
+>(
+  data: T,
+  { meta }: K
+) => {
+  // console.log("computedFields", data);
+  // console.log("computedFields meta", meta.data.data.image);
+  const file = meta.data.data.image;
+  const inputPath = path.join(projectRootPath, veliteRoot, data.slug);
+
+  const outputPath = path.join(staticBasePath, "images", data.slug);
+
+  // covert images to webp
+  await fs
+    .mkdir(outputPath, { recursive: true })
+    .then(() => console.log(`Directory '${outputPath}' created.`))
+    .catch((err) => console.error(`Error creating directory: ${err.message}`));
+
+  const image = await convertToWebP(inputPath, outputPath, file);
+
+  if (image) {
+    // console.log("computedFields image", image);
+    // replace the image in data to the new webp image
+    data.image = image;
+  }
+
+  return {
+    ...data,
+    year: data.slug.split("/")
+      ? data.slug.split("/")[1]
+      : new Date().getFullYear().toString(),
+    slugAsParams: data.slug.split("/").slice(1).join("/"),
+  };
+};
 
 const globals = {
   name: "Global",
   pattern: "globals/*.json",
   single: true,
   schema: s.object({
-    heroTitle: s.string().default("Welcome to my blog."),
+    heroTitle: s.string().default("歡迎來到野馬營."),
     metadata: s.object({
       title: s
         .object({ default: s.string(), template: s.string() })
-        .default({ default: "My Blog", template: "%s | My Blog" }),
-      description: s.string().default("Welcome to my blog."),
+        .default({ default: "野馬營", template: "%s | 野馬營" }),
+      description: s.string().default("Welcome to 野馬營."),
       authors: s
         .array(s.object({ name: s.string(), url: s.string().url().optional() }))
         .default([]),
@@ -36,10 +70,10 @@ const globals = {
         .object({
           title: s
             .object({ default: s.string(), template: s.string() })
-            .default({ default: "My Blog", template: "%s | My Blog" }),
-          description: s.string().default("Welcome to my blog."),
+            .default({ default: "野馬營", template: "%s | 野馬營" }),
+          description: s.string().default("Welcome to 野馬營."),
           url: s.string().optional(),
-          siteName: s.string().default("My Blog"),
+          siteName: s.string().default("野馬營"),
           images: s
             .array(
               s.object({
@@ -116,10 +150,9 @@ const posts = defineCollection({
   schema: s
     .object({
       title: s.string(), // Zod primitive type
-      slug: s.slug("posts"), // validate format, unique in posts collection
+      slug: s.path(),
       created: s.isodate().optional(), // input Date-like string, output ISO Date string.
       updated: s.isodate().optional(),
-      draft: s.boolean().default(false),
       featured: s.boolean().default(false),
       cover: s.image().optional(), // input image relative path, output image object with blurImage.
       excerpt: s.string().default(""),
@@ -132,13 +165,14 @@ const posts = defineCollection({
       raw: s.raw(),
       path: s.path(),
       toc: s.toc(), // table of contents of markdown content
+      date: s.isodate().default(() => new Date().toISOString()),
+      published: s.boolean().default(false),
+      image: s.image().optional(),
+      description: s.string().max(999),
+      body: s.mdx(),
       metadata: s.metadata(), // extract markdown reading-time, word-count, etc.
     })
-    .transform(async (data) => ({
-      ...data,
-      permalink: `/post/${data.slug}`,
-      images: {},
-    })),
+    .transform(computedFields),
 });
 
 const authors = defineCollection({
