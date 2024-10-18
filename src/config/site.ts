@@ -3,7 +3,7 @@ export const siteConfig = {
   baseURL: process.env.NEXT_PUBLIC_SITE_URL,
   name: "Wild Runner",
   title: "野馬營",
-  description: "一切關於跑步，越野的事情",
+  description: "一切關於跑步，馬拉松，越野的事情",
   author: "追雲逐雪",
   authorImage: authorAvatar,
   social: {
