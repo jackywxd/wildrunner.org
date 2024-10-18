@@ -29,13 +29,15 @@ export default function Races({ allRaces }: { allRaces: typeof races }) {
                 </Link>
               )}
               {race.image && (
-                <Image
-                  src={race.image}
-                  alt={race.title}
-                  width={804}
-                  height={452}
-                  className="border bg-muted transition-colors overflow-hidden"
-                />
+                <div className="flex mx-auto w-[200px] h-[120px] xl:w-[300px] xl:h-[200px] overflow-hidden justify-center items-center bg-cover">
+                  <Image
+                    src={race.image}
+                    alt={race.title}
+                    width={300}
+                    height={200}
+                    className="transition-colors rounded-xl overflow-hidden bg-cover bg-center object-contain"
+                  />
+                </div>
               )}
               <h2 className="text-2xl font-extrabold text-primary">
                 {race.title}
@@ -52,7 +54,7 @@ export default function Races({ allRaces }: { allRaces: typeof races }) {
           ))}
         </div>
       ) : (
-        <p>No Blogs found</p>
+        <p>No Posts found</p>
       )}
     </div>
   );
