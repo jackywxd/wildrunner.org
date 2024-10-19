@@ -1,83 +1,77 @@
-# MDX Static Blog Template
+# 跑步博客项目
 
-MDX Blog Template is a simple implementation of a markdown static blog. Built with Next.js 14 and velite js.
+这是一个专注于跑步和比赛的博客网站项目，使用Next.js和Velite构建。
 
-<img src="screenshot/mdx-blog-template.jpg" alt="Dashboard" width="100%">
+## 主要特性
 
-## Table of Contents
+- 基于MDX的博客系统
+- 响应式设计，使用`shadcn/ui`和`tailwindcss`
+- 代码语法高亮
+- 比赛信息管理
+- 图片相册展示
+- SEO优化
 
-- [Features](#features)
+## 技术栈
 
-- [Used Technologies](#used-technologies)
+- `Next.js`: 利用其静态站点生成(SSG)能力创建用户界面
+- `shadcn/ui`: 提供美观且可定制的UI组件
+- `Tailwind CSS`: 用于高效的样式开发
+- `MDX`: 支持在Markdown中使用JSX组件
+- `Velite`: 用于构建类型安全的数据层，处理Markdown/MDX、YAML、JSON等文件
 
-- [Run Locally](#run-locally)
+## 项目结构
 
-## Features
+- `src/app/page.tsx`: 网站首页组件
+- `src/store/day.ts`: 日期相关的状态管理
+- `next.config.mjs`: Next.js配置文件
+- `velite.config.ts`: Velite内容管理配置
+- `src/lib/cn.ts`: 通用工具函数
 
-- MDX Components
+## 主要功能
 
-- Responsive design built using `shadcn/ui` and `tailwindcss`
+1. 博客系统
+   - 支持MDX格式的文章
+   - 文章列表和详情页面
 
-- Syntax Highlighting of code.
+2. 比赛信息
+   - 展示最新比赛信息
+   - 按年份筛选比赛
 
-## Used Technologies
+3. 图片相册
+   - 支持多个相册
+   - 首页展示精选图片
 
-- `Next.js`: Harness the power of Next.js, leveraging its static site generation (SSG) capabilities to create a user interface.
+4. SEO优化
+   - 自动生成元数据和Open Graph信息
 
-- `shadcn/ui`: Enhance your app's visual and interactive elements with components from shadcn/ui. These beautifully designed components can be seamlessly integrated into your application, offering accessibility, customizability, and open-source goodness.
+## 本地运行
 
-- `Tailwind CSS`: Employ Tailwind CSS for efficient styling, enabling rapid development through its utility-first approach and streamlined design workflow.
-
-- `Markdown`: MDX lets you use JSX in your markdown content. You can import components, such as interactive charts or alerts, and embed them within your content.
-
-- `Velite`: Velite is a tool for building type-safe data layer, turn Markdown / MDX, YAML, JSON, or other files into app's data layer with Zod schema.
-
-## Run Locally
-
-To get a copy of MDX Blog Template up and running on your local machine, follow these steps:
-
-1. **Clone the repository**:
-
+1. 克隆仓库：
    ```bash
-   git clone https://github.com/devbertskie/next-mdx-blog.git
+   git clone [仓库URL]
+   cd [项目文件夹]
    ```
 
-   After successful cloned. Head over to the project directory
-
-   ```bash
-   cd next-mdx-blog
-   ```
-
-2. **Install Dependencies**:
-
-   Navigate into the project directory and install the required dependencies:
-
+2. 安装依赖：
    ```bash
    npm install
    ```
 
-3. **Run the Development Server**:
-
-   Start the app in development mode with the following command:
-
+3. 运行开发服务器：
    ```bash
    npm run dev
    ```
 
-   Head over to your browser and access the `localhost:3000`
+4. 在浏览器中访问 `http://localhost:3000`
 
-4. **Build the App**:
+## 添加新内容
 
-   To build the app, run the following command:
+要添加新的博客内容，请在 `content` 文件夹中创建新的 `.mdx` 文件。
 
-   ```bash
-   npm run build
-   ```
+## 贡献
 
----
+欢迎提交问题和拉取请求。对于重大更改，请先开issue讨论您想要更改的内容。
 
-- **Add New Blog Content**:
+## 许可证
 
-  To add new blog content, go to `content` folder and you can add new markdown component in `.mdx` file
-
-  `Important`: Make sure to name the component with dash(`-`) and without space. Example: `my-example-blog.mdx`
+[MIT](https://choosealicense.com/licenses/mit/)
