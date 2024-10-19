@@ -35,6 +35,7 @@ export default function Races({ allRaces }: { allRaces: typeof races }) {
                     alt={race.title}
                     width={300}
                     height={200}
+                    loading="lazy"
                     className="transition-colors rounded-xl overflow-hidden bg-cover bg-center object-contain"
                     placeholder={
                       "blurDataURL" in race.image ? "blur" : undefined

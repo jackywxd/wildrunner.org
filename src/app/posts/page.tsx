@@ -60,6 +60,7 @@ export default function BlogPage() {
                     width={804}
                     height={452}
                     className="transition-colors"
+                    loading="lazy"
                     placeholder={
                       "blurDataURL" in blog.image ? "blur" : undefined
                     }
