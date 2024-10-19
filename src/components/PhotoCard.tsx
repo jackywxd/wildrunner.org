@@ -24,7 +24,7 @@ const PhotoCard: React.FC<IPhotoCardProps> = ({
   className,
 }) => {
   const { src, slug, width, height, blurDataURL } = photo;
-  const [isInView, setIsInView] = useState(false);
+  const [isInView, setIsInView] = useState(isMobile ? true : false);
 
   const cardRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -78,7 +78,7 @@ const PhotoCard: React.FC<IPhotoCardProps> = ({
           placeholder="blur"
           blurDataURL={blurDataURL}
           quality={70}
-          loading="lazy"
+          priority={priority}
           style={{
             margin: 0,
             width: displayedWidth,
