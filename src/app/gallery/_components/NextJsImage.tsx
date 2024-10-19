@@ -20,6 +20,7 @@ export default function NextJsImage(
         alt={alt}
         title={title}
         sizes={sizes}
+        loading="lazy"
         placeholder={"blurDataURL" in photo ? "blur" : undefined}
       />
     </div>

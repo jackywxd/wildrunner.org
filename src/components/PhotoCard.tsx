@@ -51,7 +51,7 @@ const PhotoCard: React.FC<IPhotoCardProps> = ({
         placeholder="blur"
         blurDataURL={blurDataURL}
         quality={70}
-        priority={priority}
+        loading="lazy"
         style={{
           margin: 0,
           width: displayedWidth,
