@@ -31,13 +31,14 @@ export async function generateMetadata({
   }
 
   const title = `${gallery.name} | 相册`;
-  const description = `${gallery.name}”的照片`;
+  const description = `${gallery.name}的照片`;
   return {
     title,
     description,
     openGraph: {
       title,
       description,
+      url: `${baseURL}/gallery/${gallery.slug}`,
       images: [
         {
           url: ogImage,
