@@ -24,7 +24,7 @@ const PhotoCard: React.FC<IPhotoCardProps> = ({
   className,
 }) => {
   const { src, slug, width, height, blurDataURL } = photo;
-  const [isInView, setIsInView] = useState(isMobile ? true : false);
+  const [isInView, setIsInView] = useState(isMobile);
 
   const cardRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
