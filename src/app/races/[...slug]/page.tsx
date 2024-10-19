@@ -128,6 +128,7 @@ export default async function BlogPageItem({ params }: BlogPageItemProps) {
             height={405}
             priority
             className="my-8 border bg-muted transition-colors"
+            placeholder={"blurDataURL" in blog.image ? "blur" : undefined}
           />
         )}
         <Mdx code={blog.body} />

@@ -127,6 +127,7 @@ export default async function BlogPageItem({ params }: BlogPageItemProps) {
               height={405}
               priority
               className="mx-auto"
+              placeholder={"blurDataURL" in blog.image ? "blur" : undefined}
             />
           </div>
         )}
