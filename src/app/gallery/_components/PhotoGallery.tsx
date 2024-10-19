@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 
@@ -14,33 +14,51 @@ import "yet-another-react-lightbox/plugins/thumbnails.css";
 import React from "react";
 import PhotoAlbum from "react-photo-album";
 import type { Gallery } from "#site/content";
-import NextJsImage from "@/app/gallery/_components/NextJsImage";
+import { LazyImage } from "@/app/gallery/_components/NextJsImage";
+
+interface Photo {
+  src: string;
+  width: number;
+  height: number;
+  blurDataURL: string;
+}
 
 export const PhotoGallery: React.FC<{ gallery: Gallery }> = ({ gallery }) => {
   const [index, setIndex] = useState(-1);
+  const [photos, setPhotos] = useState<Photo[]>([]);
 
-  const photos = gallery.images.map((img) => {
-    return {
+  useEffect(() => {
+    // 初始只加载前3张图片
+    const initialPhotos = gallery.images.slice(0, 3).map((img) => ({
       src: img.src,
       width: img.width,
       height: img.height,
       blurDataURL: img.blurDataURL,
+    }));
+    setPhotos(initialPhotos);
+
+    // 延迟加载剩余图片
+    const loadRemainingPhotos = () => {
+      const remainingPhotos = gallery.images.slice(3).map((img) => ({
+        src: img.src,
+        width: img.width,
+        height: img.height,
+        blurDataURL: img.blurDataURL,
+      }));
+      setPhotos((prevPhotos) => [...prevPhotos, ...remainingPhotos]);
     };
-  });
+
+    const timer = setTimeout(loadRemainingPhotos, 1000);
+    return () => clearTimeout(timer);
+  }, [gallery]);
 
   return (
     <>
       <PhotoAlbum
         layout="rows"
         targetRowHeight={350}
-        // layout="masonry"
-        // columns={(containerWidth) => {
-        //   if (containerWidth < 768) return 2;
-        //   if (containerWidth < 1280) return 3;
-        //   return 4;
-        // }}
         photos={photos}
-        render={{ image: NextJsImage }}
+        render={{ image: LazyImage }}
         defaultContainerWidth={1280}
         sizes={{ size: "calc(1280px)" }}
         onClick={({ index }) => setIndex(index)}

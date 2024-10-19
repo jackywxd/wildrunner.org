@@ -66,13 +66,11 @@ const GalleryDetailPage: React.FC<GalleryDetailPageProps> = ({ params }) => {
   if (!gallery) notFound();
 
   return (
-    <>
-      <div className="prose-article flex flex-col gap-4">
-        <h1>{gallery.name}</h1>
-        <div className="text-end opacity-80">{gallery.images.length}张照片</div>
-        <PhotoGallery gallery={gallery} />
-      </div>
-    </>
+    <div className="prose-article flex flex-col gap-4">
+      <h1>{gallery.name}</h1>
+      <div className="text-end opacity-80">{gallery.images.length}张照片</div>
+      <PhotoGallery gallery={gallery} />
+    </div>
   );
 };
 
