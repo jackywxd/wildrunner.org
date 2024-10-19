@@ -12,6 +12,10 @@ export async function GET(request: Request) {
   let title = url.searchParams.get("title") || siteConfig.title;
 
   const fontData = await font;
+
+  // we also need to decode the title to avoid encoding issues
+  title = decodeURIComponent(title);
+
   console.log(title);
   return new ImageResponse(
     (
