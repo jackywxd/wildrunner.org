@@ -192,6 +192,8 @@ export const convertToWebP = async (
         exifData,
         metadata
       );
+      // reset exifData to empty object to minimize the size of the json file
+      exifData = {};
     } catch (e) {
       console.log(`Error reading EXIF data for ${filePath}:`, e);
     }
