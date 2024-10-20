@@ -23,10 +23,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # This will do the trick, use the corresponding env file for each environment.
-COPY .env.production .env
-
-# Set NODE_OPTIONS to increase memory limit
-ENV NODE_OPTIONS=--max-old-space-size=8192
+COPY .env.development env.production
 
 RUN npm run build
 

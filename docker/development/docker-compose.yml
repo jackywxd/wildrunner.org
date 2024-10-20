@@ -1,0 +1,11 @@
+services:
+  with-docker-multi-env-development:
+    build:
+      context: ../../
+      dockerfile: docker/development/Dockerfile
+    image: with-docker-multi-env-development
+    volumes:
+      - ../../public:/app/public
+      - ../../.velite:/app/.velite
+    ports:
+      - "3001:3000"

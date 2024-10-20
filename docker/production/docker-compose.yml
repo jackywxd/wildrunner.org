@@ -22,7 +22,11 @@ services:
     build:
       context: ../../
       dockerfile: docker/production/Dockerfile
-    image: with-docker-multi-env-production
+    image: ttl.sh/with-docker-multi-env-production:1h
+    environment:
+      NODE_OPTIONS: --max-old-space-size=8192    
+    volumes:
+      - ../../public:/app/public
     labels:
       - "traefik.enable=true"
       - traefik.http.routers.guestbook.rule=Host(`wildrunner.org`) || Host(`www.wildrunner.org`)
