@@ -67,19 +67,40 @@ const PhotoCard: React.FC<IPhotoCardProps> = ({
   return (
     <div ref={cardRef} key={`photo-container-${slug}`} className={className}>
       {isInView ? (
-        <img
-          ref={imgRef}
-          src={src}
-          alt={`cover image`}
-          className="rounded-2xl"
-          width={displayedWidth}
-          height={displayedHeight}
-          style={{
-            margin: 0,
-            width: displayedWidth,
-            height: displayedHeight,
-          }}
-        />
+        <div className="relative">
+          <img
+            ref={imgRef}
+            src={src}
+            alt={`封面图片`}
+            className="rounded-2xl transition-opacity duration-300"
+            width={displayedWidth}
+            height={displayedHeight}
+            loading="lazy"
+            style={{
+              margin: 0,
+              width: displayedWidth,
+              height: displayedHeight,
+              opacity: 0,
+            }}
+            onLoad={(e) => {
+              const img = e.target as HTMLImageElement;
+              img.style.opacity = "1";
+              const blurDiv = img.nextElementSibling as HTMLDivElement;
+              if (blurDiv) {
+                blurDiv.style.opacity = "0";
+              }
+            }}
+          />
+          <div
+            className="absolute inset-0 bg-gray-200 rounded-2xl transition-opacity duration-300"
+            style={{
+              backgroundImage: `url(${photo.blurDataURL || ""})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              filter: "blur(20px)",
+            }}
+          />
+        </div>
       ) : (
         <div className="rounded-2xl h-full bg-gray-200"></div>
       )}

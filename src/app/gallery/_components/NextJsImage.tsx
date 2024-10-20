@@ -45,13 +45,36 @@ export const LazyImage = (
       }}
     >
       {isInView ? (
-        <img
-          src={photo.src}
-          alt={alt}
-          title={title}
-          sizes={sizes}
-          loading="lazy"
-        />
+        <div className="relative w-full h-full">
+          <img
+            src={photo.src}
+            alt={alt}
+            title={title}
+            sizes={sizes}
+            loading="lazy"
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{
+              opacity: 0,
+            }}
+            onLoad={(e) => {
+              const img = e.target as HTMLImageElement;
+              img.style.opacity = "1";
+              const blurDiv = img.nextElementSibling as HTMLDivElement;
+              if (blurDiv) {
+                blurDiv.style.opacity = "0";
+              }
+            }}
+          />
+          <div
+            className="absolute inset-0 bg-gray-200 transition-opacity duration-300 ease-in-out"
+            style={{
+              backgroundImage: `url(${(photo as any).blurDataURL || ""})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              filter: "blur(20px)",
+            }}
+          />
+        </div>
       ) : (
         <div
           style={{
