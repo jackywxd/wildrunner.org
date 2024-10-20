@@ -67,7 +67,7 @@ const PhotoCard: React.FC<IPhotoCardProps> = ({
   return (
     <div ref={cardRef} key={`photo-container-${slug}`} className={className}>
       {isInView ? (
-        <div className="relative">
+        <div className="relative rounded-2xl">
           <img
             ref={imgRef}
             src={src}
@@ -101,9 +101,8 @@ const PhotoCard: React.FC<IPhotoCardProps> = ({
             }}
           />
         </div>
-      ) : (
-        <div className="rounded-2xl h-full bg-gray-200"></div>
-      )}
+      ) : // if is not inView, it won't be seen anyway
+      null}
     </div>
   );
 };
