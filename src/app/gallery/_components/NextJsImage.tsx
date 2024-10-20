@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { RenderImageContext, RenderImageProps } from "react-photo-album";
 import "react-photo-album/rows.css";
 import React, { useEffect, useRef, useState } from "react";
@@ -46,14 +45,12 @@ export const LazyImage = (
       }}
     >
       {isInView ? (
-        <Image
-          fill
-          src={photo}
+        <img
+          src={photo.src}
           alt={alt}
           title={title}
           sizes={sizes}
           loading="lazy"
-          placeholder={"blurDataURL" in photo ? "blur" : undefined}
         />
       ) : (
         <div

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useRef, useMemo, useEffect, useState } from "react";
-import Image from "next/image";
 import { RdPhoto } from "@/lib/veliteUtils";
 import { useWindowSize } from "usehooks-ts";
 import { calculateDisplayedDimensions } from "@/lib/utils";
@@ -23,7 +22,7 @@ const PhotoCard: React.FC<IPhotoCardProps> = ({
   priority = true,
   className,
 }) => {
-  const { src, slug, width, height, blurDataURL } = photo;
+  const { src, slug, width, height } = photo;
   const [isInView, setIsInView] = useState(isMobile);
 
   const cardRef = useRef<HTMLDivElement>(null);
@@ -68,17 +67,13 @@ const PhotoCard: React.FC<IPhotoCardProps> = ({
   return (
     <div ref={cardRef} key={`photo-container-${slug}`} className={className}>
       {isInView ? (
-        <Image
+        <img
           ref={imgRef}
           src={src}
           alt={`cover image`}
           className="rounded-2xl"
           width={displayedWidth}
           height={displayedHeight}
-          placeholder="blur"
-          blurDataURL={blurDataURL}
-          quality={70}
-          priority={priority}
           style={{
             margin: 0,
             width: displayedWidth,

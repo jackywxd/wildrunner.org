@@ -43,9 +43,12 @@ export default function Home() {
     return acc + gallery.images.length;
   }, 0);
 
-  const featuredImages = galleries?.reduce((acc, gallery) => {
+  let featuredImages = galleries?.reduce((acc, gallery) => {
     return acc.concat(gallery.images.filter((image) => image.featured));
   }, [] as RdPhoto[]);
+
+  featuredImages =
+    featuredImages.length > 20 ? featuredImages.slice(0, 20) : featuredImages;
 
   const filteredPosts = posts.filter((post) => post.published);
 

@@ -29,7 +29,7 @@ export const PhotoGallery: React.FC<{ gallery: Gallery }> = ({ gallery }) => {
 
   useEffect(() => {
     // 初始只加载前3张图片
-    const initialPhotos = gallery.images.slice(0, 3).map((img) => ({
+    const initialPhotos = gallery.images.slice(0, 10).map((img) => ({
       src: img.src,
       width: img.width,
       height: img.height,
@@ -39,7 +39,7 @@ export const PhotoGallery: React.FC<{ gallery: Gallery }> = ({ gallery }) => {
 
     // 延迟加载剩余图片
     const loadRemainingPhotos = () => {
-      const remainingPhotos = gallery.images.slice(3).map((img) => ({
+      const remainingPhotos = gallery.images.slice(10).map((img) => ({
         src: img.src,
         width: img.width,
         height: img.height,
