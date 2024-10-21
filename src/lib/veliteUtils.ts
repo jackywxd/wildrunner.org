@@ -284,7 +284,7 @@ export async function convertHeicToJpeg(inputBuffer: Buffer): Promise<Buffer> {
       format: "JPEG",
       quality: 90,
     });
-    return jpegBuffer;
+    return Buffer.from(jpegBuffer);
   } catch (error) {
     console.error("转换HEIC到JPEG时出错:", error);
     throw error;
