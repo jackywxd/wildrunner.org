@@ -3,6 +3,7 @@ import path from "node:path";
 import sharp from "sharp";
 import ExifReader from "exifreader";
 import { staticBasePath } from "@/base-path";
+import heicConvert from "heic-convert";
 
 export async function listFiles(dirPath: string): Promise<string[]> {
   try {
@@ -60,7 +61,7 @@ export function mergeTags<T>(...arrays: T[][]): T[] {
 }
 
 // Supported image formats
-const supportedFormats = ["jpg", "jpeg", "png", "avif", "webp", "heif"];
+const supportedFormats = ["jpg", "jpeg", "png", "avif", "webp", "heic"];
 
 // Function to get all image files in the directory
 const getImageFiles = async (dir: string): Promise<string[]> => {
@@ -161,10 +162,15 @@ export const convertToWebP = async (
 
   let fileBuffer: Buffer;
   try {
-    // Read EXIF data
+    // 读取文件
     fileBuffer = await fs.readFile(filePath);
+
+    // 如果是HEIC格式，先转换为JPEG
+    if (path.extname(file).toLowerCase() === ".heic") {
+      fileBuffer = await convertHeicToJpeg(fileBuffer);
+    }
   } catch (e) {
-    console.log(`Error reading file ${filePath}:`, e);
+    console.log(`读取文件 ${filePath} 时出错:`, e);
     // get the extension of the file
     const ext = path.extname(file);
     // change ext to uppercase
@@ -270,3 +276,17 @@ export const setFeaturedImages = (
     featured: featuredSlugs.includes(image.filename.split(".")[0]),
   }));
 };
+
+export async function convertHeicToJpeg(inputBuffer: Buffer): Promise<Buffer> {
+  try {
+    const jpegBuffer = await heicConvert({
+      buffer: inputBuffer,
+      format: "JPEG",
+      quality: 90,
+    });
+    return jpegBuffer;
+  } catch (error) {
+    console.error("转换HEIC到JPEG时出错:", error);
+    throw error;
+  }
+}

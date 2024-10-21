@@ -195,13 +195,13 @@ const authors = defineCollection({
 
 export default defineConfig({
   root: veliteRoot,
-  // output: {
-  //   data: ".velite",
-  //   assets: "public/static",
-  //   base: "/static/",
-  //   name: "[name]-[hash:6].[ext]",
-  //   clean: true,
-  // },
+  output: {
+    data: ".velite",
+    assets: "public/static",
+    base: "/static/",
+    name: "[name]-[hash:6].[ext]",
+    clean: true,
+  },
   collections: { races, posts, galleries, authors, globals },
   mdx: {
     rehypePlugins: [
