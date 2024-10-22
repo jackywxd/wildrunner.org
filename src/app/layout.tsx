@@ -9,13 +9,9 @@ import { cn } from "@/lib/utils";
 import App from "@/components/app";
 import Providers from "./providers";
 import PageTransitionEffect from "@/components/transition/PageTransitionEffect";
-import dynamic from "next/dynamic";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 
 const lexend = Lexend({ subsets: ["latin"], variable: "--font-lexend" });
-const PostHogPageView = dynamic(() => import("@/components/PostHogPageView"), {
-  ssr: false,
-});
 
 export const metadata: Metadata = {
   title: {
@@ -47,7 +43,6 @@ export default function RootLayout({
           <App>
             <NextTopLoader showSpinner={false} />
             <PageTransitionEffect>{children}</PageTransitionEffect>
-            <PostHogPageView />
             <TailwindIndicator />
           </App>
         </Providers>

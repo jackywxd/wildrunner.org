@@ -15,8 +15,10 @@ export const MotionDiv: React.FC<{
   children,
 }) => {
   return (
-    <motion.div role={role} key={keyName} layoutId={keyName} className={className}>
-      {children}
+    <motion.div key={keyName} layoutId={keyName}>
+      <div role={role} className={className}>
+        {children}
+      </div>
     </motion.div>
   );
 };

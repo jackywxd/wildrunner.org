@@ -34,8 +34,8 @@ export function generateMetadata(): Metadata {
 
 const Layout: React.FC<{
   children: React.ReactNode;
-  params: { slug: string };
-}> = ({ children }) => {
+  params: Promise<{ slug: string }>;
+}> = async ({ children, params }) => {
   return (
     <div className="container relative max-w-7xl py-6 lg:py-10">{children}</div>
   );

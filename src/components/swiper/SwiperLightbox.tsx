@@ -171,7 +171,7 @@ const SwiperLightbox: React.FC<{
           <motion.button
             data-theme="dark"
             aria-label="显示照片信息"
-            onClick={() => {
+            onTap={() => {
               setShowExif(!showExif);
             }}
             initial={{ opacity: 0 }}
@@ -179,7 +179,19 @@ const SwiperLightbox: React.FC<{
             whileHover={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={transitionApple}
-            className="fixed top-0 right-[106px] w-[50px] h-[60px] z-[999999] flex flex-col items-center justify-center bg-transparent"
+            style={{
+              position: "fixed",
+              top: 0,
+              right: "106px",
+              width: "50px",
+              height: "60px",
+              zIndex: 999999,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              backgroundColor: "transparent",
+            }}
           >
             <Icon icon="entypo:info-with-circle" width="18" height="18" />
           </motion.button>

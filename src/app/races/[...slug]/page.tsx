@@ -12,13 +12,13 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 
 interface BlogPageItemProps {
-  params: {
+  params: Promise<{
     slug: string[];
-  };
+  }>;
 }
 
 async function getBlogFromParams(params: BlogPageItemProps["params"]) {
-  const slug = params?.slug.join("/");
+  const slug = (await params).slug.join("/");
 
   const blog = allBlogs.find((blog) => blog.slugAsParams === slug);
 
@@ -70,9 +70,7 @@ export async function generateMetadata({
   };
 }
 
-export async function generateStaticParams(): Promise<
-  BlogPageItemProps["params"][]
-> {
+export async function generateStaticParams() {
   return allBlogs.map((blog) => ({
     slug: blog.slugAsParams.split("/"),
   }));

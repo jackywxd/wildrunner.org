@@ -163,7 +163,9 @@ export function ProgressBar({ className }: { className: string }) {
   return (
     <LazyMotion features={domAnimation}>
       {progress.loading && (
-        <m.div style={{ width }} exit={{ opacity: 0 }} className={className} />
+        <div className={className}>
+          <m.div style={{ width }} exit={{ opacity: 0 }} />
+        </div>
       )}
     </LazyMotion>
   );
