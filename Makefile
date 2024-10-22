@@ -1,5 +1,6 @@
 .PHONY: build-development
 build-development: ## Build the development docker image.
+	npx velite build --clean
 	docker compose -f docker/development/docker-compose.yml build
 
 .PHONY: start-development
@@ -12,6 +13,7 @@ stop-development: ## Stop the development docker container.
 
 .PHONY: build-staging
 build-staging: ## Build the staging docker image.
+	npx velite build --clean
 	docker compose -f docker/staging/docker-compose.yml build
 
 .PHONY: start-staging
@@ -24,6 +26,7 @@ stop-staging: ## Stop the staging docker container.
   
 .PHONY: build-production
 build-production: ## Build the production docker image.
+	npx velite build --clean
 	docker compose -f docker/production/docker-compose.yml build
 
 .PHONY: start-production
