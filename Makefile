@@ -26,7 +26,7 @@ stop-staging: ## Stop the staging docker container.
   
 .PHONY: build-production
 build-production: ## Build the production docker image.
-	npx velite build --clean
+	# npx velite build --clean
 	docker compose -f docker/production/docker-compose.yml build
 
 .PHONY: start-production
