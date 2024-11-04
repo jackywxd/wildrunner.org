@@ -1,6 +1,6 @@
 .PHONY: build-development
 build-development: ## Build the development docker image.
-	npx velite build --clean
+	# npx velite build --clean
 	docker compose -f docker/development/docker-compose.yml build
 
 .PHONY: start-development
