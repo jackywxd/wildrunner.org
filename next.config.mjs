@@ -12,9 +12,35 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "ss2.meipian.me",
+        hostname: "images.wildrunner.org",
+      },
+      {
+        protocol: "https",
+        hostname: "pub-3ea1cd399d6642049d046bde97886fe3.r2.dev",
       },
     ],
+  },
+  headers: async () => {
+    return [
+      {
+        source: "/:all*(svg|jpg|jpeg|png|webp)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=3600, must-revalidate",
+          },
+        ],
+      },
+    ];
   },
   webpack: (config) => {
     // config.plugins.push(new VeliteWebpackPlugin());

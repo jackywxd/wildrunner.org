@@ -10,6 +10,7 @@
     "prettier": "pnpx prettier --write ."
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.717.0",
     "@iconify-icon/react": "^2.1.0",
     "@radix-ui/react-slot": "^1.0.2",
     "axios": "^1.7.7",

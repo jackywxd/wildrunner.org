@@ -4,6 +4,56 @@ import sharp from "sharp";
 import ExifReader from "exifreader";
 import { staticBasePath } from "@/base-path";
 import heicConvert from "heic-convert";
+import {
+  S3Client,
+  PutObjectCommand,
+  HeadObjectCommand,
+  NotFound,
+} from "@aws-sdk/client-s3";
+
+// 添加 R2 客户端配置
+const s3Client = new S3Client({
+  region: "auto",
+  endpoint: process.env.S3_ENDPOINT,
+  credentials: {
+    accessKeyId: process.env.S3_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
+  },
+});
+
+async function getExistingImageMetadata(key: string): Promise<RdPhoto | null> {
+  try {
+    const headResult = await s3Client.send(
+      new HeadObjectCommand({
+        Bucket: process.env.S3_BUCKET!,
+        Key: key,
+      })
+    );
+
+    // 使用 Metadata（大写）
+    const metadata = headResult.Metadata;
+    if (metadata) {
+      return {
+        filename: path.basename(key),
+        src: `${process.env.R2_PUBLIC_URL}/${key}`,
+        slug: `${process.env.R2_PUBLIC_URL}/${key}`,
+        featured: metadata.featured === "true",
+        width: parseInt(metadata.width || "0"),
+        height: parseInt(metadata.height || "0"),
+        blurWidth: parseInt(metadata.blurwidth || "0"),
+        blurHeight: parseInt(metadata.blurheight || "0"),
+        exif: JSON.parse(metadata.exif || "{}"),
+        blurDataURL: metadata.blurdataurl || "",
+      };
+    }
+    return null;
+  } catch (error) {
+    if (error instanceof NotFound) {
+      return null;
+    }
+    throw error;
+  }
+}
 
 export async function listFiles(dirPath: string): Promise<string[]> {
   try {
@@ -90,6 +140,7 @@ const generateBlurDataUrl = async (
     .clone()
     .resize(blurWidth) // Resize to a small size
     .blur() // Apply blur
+    .webp({ quality: 50 })
     .toBuffer();
 
   return `data:image/webp;base64,${buffer.toString("base64")}`;
@@ -150,16 +201,20 @@ async function rotateImageBasedOnExif(
 
 export const convertToWebP = async (
   inputPath: string,
-  outputPath: string,
+  slug: string,
   file: string
 ) => {
   const filePath = path.join(inputPath, file);
 
-  const outputFilePath = path.join(
-    outputPath,
-    `${path.basename(file, path.extname(file))}.webp`
-  );
+  const outputFileName = `${path.basename(file, path.extname(file))}.webp`;
+  const key = `${slug}/${outputFileName}`;
 
+  // 检查文件是否存在并获取元数据
+  // const existingMetadata = await getExistingImageMetadata(key);
+  // if (existingMetadata) {
+  //   console.log(`File ${outputFileName} already exists in R2, skipping...`);
+  //   return existingMetadata;
+  // }
   let fileBuffer: Buffer;
   try {
     // 读取文件
@@ -188,45 +243,72 @@ export const convertToWebP = async (
   // check file extension, if it is svg, skip; if it is not svg, read EXIF
   if (path.extname(file) !== ".svg") {
     try {
-      exifData = await ExifReader.load(fileBuffer, {
+      const exif = await ExifReader.load(fileBuffer, {
         async: true,
         expanded: true,
       });
-      // Rotate image based on EXIF orientation
-      sharpedImage = await rotateImageBasedOnExif(
-        sharpedImage,
-        exifData,
-        metadata
-      );
-      // reset exifData to empty object to minimize the size of the json file
-      exifData = {};
+      // 先进行图片旋转
+      sharpedImage = await rotateImageBasedOnExif(sharpedImage, exif, metadata);
+
+      // 添加宽度和高度到 exifData
+      exifData = exif?.exif
+        ? {
+            Make: exif.exif.Make?.description,
+            Model: exif.exif.Model?.description,
+            DateTimeOriginal: exif.exif.DateTimeOriginal?.description,
+            ExposureTime: exif.exif.ExposureTime?.description,
+            FNumber: exif.exif.FNumber?.description,
+            ISO: exif.exif.ISO?.description,
+            FocalLength: exif.exif.FocalLength?.description,
+            ImageWidth: metadata.width, // 添加宽度
+            ImageHeight: metadata.height, // 添加高度
+          }
+        : {};
     } catch (e) {
       console.log(`Error reading EXIF data for ${filePath}:`, e);
     }
   }
 
-  const src = `/${path.posix.format(path.parse(path.relative(staticBasePath, outputFilePath)))}`;
-
   // Check if the output file already exists
-  if (!(await fileExists(outputFilePath))) {
-    // Convert image to WebP
-    const { width, height } = metadata;
-    let resizeOptions = {};
-    // Maximum edge size
-    const maxEdge = 3840;
-    if (width! > height!) {
-      resizeOptions = { width: maxEdge };
-    } else {
-      resizeOptions = { height: maxEdge };
-    }
-    await sharpedImage
-      .resize(resizeOptions)
-      .webp({ quality: 80 })
-      .toFile(outputFilePath);
-    console.log(`Converted and saved: ${file} -> ${outputFilePath}`);
+  // Convert image to WebP
+  const { width, height } = metadata;
+  let resizeOptions = {};
+  // Maximum edge size
+  const maxEdge = 3840;
+  if (width && height && width > height) {
+    resizeOptions = { width: maxEdge };
+  } else {
+    resizeOptions = { height: maxEdge };
   }
+  // 转换为 WebP 并获取 buffer
+  const webpBuffer = await sharpedImage
+    .resize(resizeOptions)
+    .webp({ quality: 80 })
+    .toBuffer();
+  // 上传到 R2 时包含元数据
   // console.log(`Processed image: ${filePath}`);
   const blurDataURL = await generateBlurDataUrl(sharpedImage);
+  const src = `${process.env.R2_PUBLIC_URL}/${key}`;
+
+  await s3Client.send(
+    new PutObjectCommand({
+      Bucket: process.env.S3_BUCKET!,
+      Key: key,
+      Body: webpBuffer,
+      ContentType: "image/webp",
+      Metadata: {
+        width: metadata.width!.toString(),
+        height: metadata.height!.toString(),
+        blurWidth: blurWidth.toString(),
+        blurHeight: Math.round(
+          (blurWidth / metadata.width!) * metadata.height!
+        ).toString(),
+        exif: JSON.stringify(exifData),
+        blurDataURL: blurDataURL,
+      },
+    })
+  );
+  console.log(`Uploaded to R2: ${file} -> ${src}`);
 
   return {
     filename: file,
@@ -253,7 +335,7 @@ export const convertImagesToWebP = async (
   const images: RdPhoto[] = [];
 
   // Ensure the output directory exists
-  await fs.mkdir(outputPath, { recursive: true });
+  // await fs.mkdir(outputPath, { recursive: true });
 
   for (const file of imageFiles) {
     try {

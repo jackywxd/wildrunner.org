@@ -26,15 +26,15 @@ const computedFields = async <
   const file = meta.data.data.image;
   const inputPath = path.join(projectRootPath, veliteRoot, data.slug);
 
-  const outputPath = path.join(staticBasePath, "images", data.slug);
+  // const outputPath = path.join(staticBasePath, "images", data.slug);
 
   // covert images to webp
-  await fs
-    .mkdir(outputPath, { recursive: true })
-    .then(() => console.log(`Directory '${outputPath}' created.`))
-    .catch((err) => console.error(`Error creating directory: ${err.message}`));
+  // await fs
+  //   .mkdir(outputPath, { recursive: true })
+  //   .then(() => console.log(`Directory '${outputPath}' created.`))
+  //   .catch((err) => console.error(`Error creating directory: ${err.message}`));
 
-  const image = await convertToWebP(inputPath, outputPath, file);
+  const image = await convertToWebP(inputPath, data.slug, file);
 
   if (image) {
     // console.log("computedFields image", image);
@@ -123,7 +123,7 @@ const galleries = defineCollection({
   schema: s
     .object({
       name: s.string(),
-      slug: s.slug("gallery"),
+      slug: s.slug("gallery"), // this is path for the gallery, not the slug
       cover: s.image().optional(),
       created: s.isodate().optional(),
       updated: s.isodate().optional(),
@@ -138,7 +138,7 @@ const galleries = defineCollection({
         data.featured,
         await convertImagesToWebP(
           path.join(projectRootPath, veliteRoot, data.path),
-          path.join(staticBasePath, "gallery")
+          path.join(data.path)
         )
       ),
     })),
@@ -172,7 +172,18 @@ const posts = defineCollection({
       body: s.mdx(),
       metadata: s.metadata(), // extract markdown reading-time, word-count, etc.
     })
-    .transform(computedFields),
+    .transform(async (data, meta) => {
+      // 首先处理主图片（如果存在）
+      const transformedData = await computedFields(data, meta);
+
+      return {
+        ...transformedData,
+        images: await convertImagesToWebP(
+          path.join(projectRootPath, veliteRoot, data.path),
+          path.join(data.path)
+        ),
+      };
+    }),
 });
 
 const authors = defineCollection({
