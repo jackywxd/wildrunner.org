@@ -2,14 +2,27 @@ import fs from "fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 import ExifReader from "exifreader";
-import { staticBasePath } from "@/base-path";
 import heicConvert from "heic-convert";
 import {
   S3Client,
   PutObjectCommand,
   HeadObjectCommand,
   NotFound,
+  HeadObjectCommandOutput,
 } from "@aws-sdk/client-s3";
+
+export type RdPhoto = {
+  filename: string;
+  src: string;
+  slug: string; // this is required
+  featured: boolean;
+  width: number;
+  height: number;
+  blurDataURL: string;
+  blurWidth: number;
+  blurHeight: number;
+  exif: ExifReader.ExpandedTags;
+};
 
 // 添加 R2 客户端配置
 const s3Client = new S3Client({
@@ -23,14 +36,14 @@ const s3Client = new S3Client({
 
 async function getExistingImageMetadata(key: string): Promise<RdPhoto | null> {
   try {
-    const headResult = await s3Client.send(
+    const headResult = (await s3Client.send(
       new HeadObjectCommand({
         Bucket: process.env.S3_BUCKET!,
         Key: key,
       })
-    );
+    )) as HeadObjectCommandOutput;
 
-    // 使用 Metadata（大写）
+    // 使用 metadata（小写）
     const metadata = headResult.Metadata;
     if (metadata) {
       return {
@@ -121,15 +134,6 @@ const getImageFiles = async (dir: string): Promise<string[]> => {
   );
 };
 
-// Function to check if a file exists
-const fileExists = async (filePath: string): Promise<boolean> => {
-  try {
-    await fs.access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
-};
 const blurWidth = 20;
 
 // Function to generate blurDataUrl
@@ -144,19 +148,6 @@ const generateBlurDataUrl = async (
     .toBuffer();
 
   return `data:image/webp;base64,${buffer.toString("base64")}`;
-};
-
-export type RdPhoto = {
-  filename: string;
-  src: string;
-  slug: string; // this is required
-  featured: boolean;
-  width: number;
-  height: number;
-  blurDataURL: string;
-  blurWidth: number;
-  blurHeight: number;
-  exif: ExifReader.ExpandedTags;
 };
 
 // Function to rotate the image based on EXIF orientation
@@ -238,8 +229,8 @@ export const convertToWebP = async (
     fileBuffer = await fs.readFile(newFilePath);
   }
   let sharpedImage = sharp(fileBuffer);
-  let exifData: ExifReader.ExpandedTags = {};
   const metadata = await sharpedImage.metadata();
+  let exifData = {};
   // check file extension, if it is svg, skip; if it is not svg, read EXIF
   if (path.extname(file) !== ".svg") {
     try {
@@ -251,19 +242,25 @@ export const convertToWebP = async (
       sharpedImage = await rotateImageBasedOnExif(sharpedImage, exif, metadata);
 
       // 添加宽度和高度到 exifData
-      exifData = exif?.exif
-        ? {
-            Make: exif.exif.Make?.description,
-            Model: exif.exif.Model?.description,
-            DateTimeOriginal: exif.exif.DateTimeOriginal?.description,
-            ExposureTime: exif.exif.ExposureTime?.description,
-            FNumber: exif.exif.FNumber?.description,
-            ISO: exif.exif.ISO?.description,
-            FocalLength: exif.exif.FocalLength?.description,
-            ImageWidth: metadata.width, // 添加宽度
-            ImageHeight: metadata.height, // 添加高度
-          }
-        : {};
+      exifData = {
+        exif: exif?.exif
+          ? {
+              Make: { description: exif.exif.Make?.description },
+              Model: { description: exif.exif.Model?.description },
+              DateTimeOriginal: {
+                description: exif.exif.DateTimeOriginal?.description,
+              },
+              ExposureTime: {
+                description: exif.exif.ExposureTime?.description,
+              },
+              FNumber: { description: exif.exif.FNumber?.description },
+              ISOSpeedRatings: {
+                description: exif.exif.ISOSpeedRatings?.description,
+              },
+              FocalLength: { description: exif.exif.FocalLength?.description },
+            }
+          : {},
+      };
     } catch (e) {
       console.log(`Error reading EXIF data for ${filePath}:`, e);
     }
