@@ -13,7 +13,53 @@ import {
 import { projectRootPath, staticBasePath } from "@/base-path";
 
 const veliteRoot = "src/content";
+const processImages = () => async (tree: any, file: any) => {
+  const traverse = async (node: any) => {
+    if (node.type === "element" && node.properties?.src) {
+      const src = node.properties.src;
+      if (!src.startsWith("http")) {
+        try {
+          const filename = path.basename(src.replace("/static/", ""));
+          const postDir = path.dirname(file.path);
+          const inputPath = path.join(postDir);
 
+          const slugParts = postDir.split(path.sep);
+          const slug = `${slugParts.slice(-3).join("/")}`;
+
+          console.log("Processing image:", {
+            filename,
+            inputPath,
+            slug,
+          });
+
+          const image = await convertToWebP(inputPath, slug, filename);
+
+          // 创建新的属性对象，保留原有属性
+          const newProperties = {
+            ...node.properties,
+            src: image.src,
+            width: image.width,
+            height: image.height,
+            blurdataurl: image.blurDataURL,
+            loading: "lazy",
+            placeholder: "blur",
+          };
+
+          // 替换原有属性
+          node.properties = newProperties;
+        } catch (error) {
+          console.error(`Failed to process image: ${src}`, error);
+        }
+      }
+    }
+
+    if (node.children) {
+      await Promise.all(node.children.map(traverse));
+    }
+  };
+
+  await traverse(tree);
+};
 const computedFields = async <
   T extends { slug: string; title: string; image?: Image },
   K extends { meta: { data: any } },
@@ -112,7 +158,9 @@ const races = defineCollection({
       published: s.boolean().default(false),
       image: s.image().optional(),
       author: s.string(),
-      body: s.mdx(),
+      body: s.mdx({
+        rehypePlugins: [processImages],
+      }),
     })
     .transform(computedFields),
 });
@@ -161,7 +209,9 @@ const posts = defineCollection({
       columns: s.array(s.string()).default([]),
       categories: s.array(s.string()).default([]),
       tags: s.array(s.string()).default([]),
-      content: s.mdx(),
+      body: s.mdx({
+        rehypePlugins: [processImages],
+      }),
       raw: s.raw(),
       path: s.path(),
       toc: s.toc(), // table of contents of markdown content
@@ -169,13 +219,11 @@ const posts = defineCollection({
       published: s.boolean().default(false),
       image: s.image().optional(),
       description: s.string().max(999),
-      body: s.mdx(),
       metadata: s.metadata(), // extract markdown reading-time, word-count, etc.
     })
     .transform(async (data, meta) => {
       // 首先处理主图片（如果存在）
       const transformedData = await computedFields(data, meta);
-
       return {
         ...transformedData,
         images: await convertImagesToWebP(
@@ -209,8 +257,7 @@ export default defineConfig({
   output: {
     data: ".velite",
     assets: "public/static",
-    base: "/static/",
-    name: "[name]-[hash:6].[ext]",
+    name: "[name].[ext]",
     clean: true,
   },
   collections: { races, posts, galleries, authors, globals },

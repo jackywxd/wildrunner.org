@@ -210,11 +210,11 @@ export const convertToWebP = async (
   const key = `${slug}/${outputFileName}`;
 
   // 检查文件是否存在并获取元数据
-  // const existingMetadata = await getExistingImageMetadata(key);
-  // if (existingMetadata) {
-  //   console.log(`File ${outputFileName} already exists in R2, skipping...`);
-  //   return existingMetadata;
-  // }
+  const existingMetadata = await getExistingImageMetadata(key);
+  if (existingMetadata) {
+    console.log(`File ${outputFileName} already exists in R2, skipping...`);
+    return existingMetadata;
+  }
   let fileBuffer: Buffer;
   try {
     // 读取文件
