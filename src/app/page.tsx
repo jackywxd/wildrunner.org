@@ -50,7 +50,9 @@ export default function Home() {
   featuredImages =
     featuredImages.length > 20 ? featuredImages.slice(0, 20) : featuredImages;
 
-  const filteredPosts = posts.filter((post) => post.published);
+  const filteredPosts = posts
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .filter((post) => post.published);
 
   return (
     <main className="container relative max-w-6xl py-6 lg:py-10">
@@ -106,11 +108,11 @@ export default function Home() {
       </h2>
       <section>
         <Races
-          allRaces={races.filter(
-            (race) =>
-              race.year === new Date().getFullYear().toString() &&
-              race.published
-          )}
+          allRaces={races
+            .sort(
+              (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+            )
+            .filter((race) => race.published)}
         />
       </section>
       {featuredImages?.length > 0 && (
