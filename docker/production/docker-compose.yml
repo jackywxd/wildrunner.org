@@ -1,39 +1,92 @@
+# docker-compose.yml
+
 services:
   reverse-proxy:
     image: traefik:v3.1
+    # --- Traefik Static Configuration via Command Line Arguments ---
     command:
-      - "--providers.docker"
+      # Docker Provider: Listen to Docker events
+      - "--providers.docker=true"
+      # Don't expose containers unless explicitly enabled via labels
       - "--providers.docker.exposedbydefault=false"
-      - "--entryPoints.websecure.address=:443"
-      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
-      - "--certificatesresolvers.myresolver.acme.email=admin@wildrunner.org"
-      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+
+      # EntryPoints: Define listening ports
       - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+
+      # HTTP to HTTPS Redirection: Redirect all traffic from web (HTTP) to websecure (HTTPS)
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+
+      # ACME (Let's Encrypt) Configuration: Using DNS-01 Challenge with Cloudflare
+      - "--certificatesresolvers.myresolver.acme.email=admin@wildrunner.org" # Your email for LE notifications
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json" # Path inside the container to store certificates
+      # - "--certificatesresolvers.myresolver.acme.tlschallenge=true" # <--- REMOVED THIS LINE
+      - "--certificatesresolvers.myresolver.acme.dnschallenge=true" # <--- ADDED: Enable DNS challenge
+      - "--certificatesresolvers.myresolver.acme.dnschallenge.provider=cloudflare" # <--- ADDED: Specify Cloudflare as the DNS provider
+      # Optional: Increase delay if DNS propagation is slow (e.g., 60 seconds)
+      # - "--certificatesresolvers.myresolver.acme.dnschallenge.delaybeforecheck=60"
+
+      # Optional: Enable Traefik API/Dashboard (useful for debugging)
+      # Remove '--api.insecure=true' or secure it properly for production access
+      # - "--api.dashboard=true"
+      # - "--api.insecure=true" # Access dashboard via http://<server-ip>:8080 (NOT SECURE)
+
     ports:
-      - 80:80
-      - "443:443"
+      - "80:80" # Map host port 80 to container port 80 (EntryPoint web)
+      - "443:443" # Map host port 443 to container port 443 (EntryPoint websecure)
+      # - "8080:8080" # Map host port 8080 if enabling the insecure dashboard above
+    environment:
+      # This tells compose to set the CLOUDFLARE_DNS_API_TOKEN env var inside the container,
+      # taking its value from the CLOUDFLARE_DNS_API_TOKEN variable found in the .env file
+      # during compose file processing.
+      - CLOUDFLARE_DNS_API_TOKEN=${CLOUDFLARE_DNS_API_TOKEN}
     volumes:
+      # Volume to persist Let's Encrypt certificates
       - letsencrypt:/letsencrypt
-      - /var/run/docker.sock:/var/run/docker.sock
+      # Mount Docker socket (read-only) so Traefik can listen to container events
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
     restart: unless-stopped
+    # Optional: Labels to expose the Traefik dashboard via Traefik itself (requires authentication middleware)
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.yourdomain.com`)" # Use a real subdomain
+    #   - "traefik.http.routers.traefik-dashboard.service=api@internal"
+    #   - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
+    #   - "traefik.http.routers.traefik-dashboard.tls.certresolver=myresolver"
+    #   # !!! Add a middleware for authentication below (e.g., basic auth, OAuth) !!!
+    #   # - "traefik.http.routers.traefik-dashboard.middlewares=your-auth-middleware-name"
+
+  # --- Your Application Service ---
   with-docker-multi-env-production:
     build:
       context: ../../
       dockerfile: docker/production/Dockerfile
+    # Consider using a persistent image registry instead of ttl.sh for production
     image: ttl.sh/with-docker-multi-env-production:1h
     environment:
-      NODE_OPTIONS: --max-old-space-size=8192    
+      NODE_OPTIONS: --max-old-space-size=8192
     volumes:
       - ../../public:/app/public
+    # --- Traefik Labels for Dynamic Configuration ---
     labels:
+      # Enable Traefik for this service
       - "traefik.enable=true"
-      - traefik.http.routers.guestbook.rule=Host(`wildrunner.org`) || Host(`www.wildrunner.org`)
+      # Define the router rule: Match requests for these hostnames
+      - "traefik.http.routers.guestbook.rule=Host(`wildrunner.org`) || Host(`www.wildrunner.org`)"
+      # Assign the router to the 'websecure' (HTTPS) entrypoint
       - "traefik.http.routers.guestbook.entrypoints=websecure"
+      # Tell the router to use the 'myresolver' for TLS certificates (Let's Encrypt)
       - "traefik.http.routers.guestbook.tls.certresolver=myresolver"
-      - traefik.http.middlewares.mywwwredirect.redirectregex.regex=^https://www\.(.*)
-      - traefik.http.middlewares.mywwwredirect.redirectregex.replacement=https://$${1}
-      - traefik.http.routers.guestbook.middlewares=mywwwredirect
+
+      # Define the www to non-www redirect middleware
+      - "traefik.http.middlewares.mywwwredirect.redirectregex.regex=^https://www\\.(.*)" # Match HTTPS www requests
+      - "traefik.http.middlewares.mywwwredirect.redirectregex.replacement=https://$${1}" # Replace with non-www HTTPS
+
+      # Apply the middleware to the router
+      - "traefik.http.routers.guestbook.middlewares=mywwwredirect"
+
+# Define the named volume used by Traefik
 volumes:
   letsencrypt:
