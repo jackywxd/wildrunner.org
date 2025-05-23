@@ -1,0 +1,1 @@
+*.jpg[[:space:]]*.png[[:space:]]*.jpeg[[:space:]]*.PNG[[:space:]]*.JPEG[[:space:]]*.JPG[[:space:]]*.HEIC[[:space:]]*.heic[[:space:]]*.webp[[:space:]]*.WEBP filter=lfs diff=lfs merge=lfs -text
