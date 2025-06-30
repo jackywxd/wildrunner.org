@@ -218,6 +218,7 @@ const posts = defineCollection({
       date: s.isodate().default(() => new Date().toISOString()),
       published: s.boolean().default(false),
       image: s.image().optional(),
+      video: s.file().optional(),
       description: s.string().max(999),
       metadata: s.metadata(), // extract markdown reading-time, word-count, etc.
     })
