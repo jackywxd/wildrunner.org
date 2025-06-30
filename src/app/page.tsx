@@ -76,14 +76,14 @@ export default function Home() {
           ))} */}
           </div>
           <h1 className="text-3xl capitalize sm:text-5xl md:text-6xl lg:text-7xl">
-            拥抱狂野，征服赛道 <br></br>
+            {siteConfig.slogan}
           </h1>
           <h1 className="text-primary text-3xl capitalize sm:text-5xl md:text-6xl lg:text-7xl">
-            Run wild, run free.
+            Run wild, run free. <br></br>
           </h1>
-          <p className="max-w-2xl leading-normal text-muted-foreground sm:text-xl sm:leading-8">
+          {/* <p className="max-w-2xl leading-normal text-muted-foreground md:text-2xl sm:text-xl sm:leading-8">
             {siteConfig.description}
-          </p>
+          </p> */}
         </div>
       </section>
       {filteredPosts?.length > 0 && (
