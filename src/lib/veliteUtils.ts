@@ -24,6 +24,31 @@ export type RdPhoto = {
   exif: ExifReader.ExpandedTags;
 };
 
+// 视频文件类型定义
+export type RdVideo = {
+  filename: string;
+  src: string;
+  slug: string;
+  size: number;
+  extension: string;
+  mimeType: string;
+  lastModified: string;
+};
+
+// 支持的视频格式
+const supportedVideoFormats = [
+  "mp4",
+  "avi",
+  "mov",
+  "wmv",
+  "flv",
+  "webm",
+  "mkv",
+  "m4v",
+  "3gp",
+  "ogv",
+];
+
 // 添加 R2 客户端配置
 const s3Client = new S3Client({
   region: "auto",
@@ -124,7 +149,7 @@ export function mergeTags<T>(...arrays: T[][]): T[] {
 }
 
 // Supported image formats
-const supportedFormats = ["jpg", "jpeg", "png", "avif", "webp", "heic"];
+const supportedFormats = ["jpg", "jpeg", "png", "avif", "webp", "heic", "svg"];
 
 // Function to get all image files in the directory
 const getImageFiles = async (dir: string): Promise<string[]> => {
@@ -195,12 +220,27 @@ export const convertToWebP = async (
   slug: string,
   file: string
 ) => {
+  // 參數驗證
+  if (!inputPath || typeof inputPath !== "string") {
+    throw new Error(`Invalid inputPath: ${inputPath}`);
+  }
+  if (!slug || typeof slug !== "string") {
+    throw new Error(`Invalid slug: ${slug}`);
+  }
+  if (!file || typeof file !== "string") {
+    throw new Error(`Invalid file: ${file}`);
+  }
+
   const filePath = path.join(inputPath, file);
 
   const outputFileName = `${path.basename(file, path.extname(file))}.webp`;
   const key = `${slug}/${outputFileName}`;
 
-  // 检查文件是否存在并获取元数据
+  console.log(
+    `🔄 Converting image: ${file} in ${inputPath} with slug: ${slug}`
+  );
+
+  // 檢查文件是否存在並獲取元數據
   const existingMetadata = await getExistingImageMetadata(key);
   if (existingMetadata) {
     console.log(`File ${outputFileName} already exists in R2, skipping...`);
@@ -208,15 +248,15 @@ export const convertToWebP = async (
   }
   let fileBuffer: Buffer;
   try {
-    // 读取文件
+    // 讀取文件
     fileBuffer = await fs.readFile(filePath);
 
-    // 如果是HEIC格式，先转换为JPEG
+    // 如果是HEIC格式，先轉換為JPEG
     if (path.extname(file).toLowerCase() === ".heic") {
       fileBuffer = await convertHeicToJpeg(fileBuffer);
     }
   } catch (e) {
-    console.log(`读取文件 ${filePath} 时出错:`, e);
+    console.log(`讀取文件 ${filePath} 時出錯:`, e);
     // get the extension of the file
     const ext = path.extname(file);
     // change ext to uppercase
@@ -228,20 +268,28 @@ export const convertToWebP = async (
     // read the new file
     fileBuffer = await fs.readFile(newFilePath);
   }
+  // Handle SVG files specially
+  const isNotSvg = path.extname(file).toLowerCase() !== ".svg";
   let sharpedImage = sharp(fileBuffer);
+
+  // For SVG files, we need to specify dimensions
+  if (!isNotSvg) {
+    sharpedImage = sharp(fileBuffer, { density: 300 });
+  }
+
   const metadata = await sharpedImage.metadata();
   let exifData = {};
   // check file extension, if it is svg, skip; if it is not svg, read EXIF
-  if (path.extname(file) !== ".svg") {
+  if (isNotSvg) {
     try {
       const exif = await ExifReader.load(fileBuffer, {
         async: true,
         expanded: true,
       });
-      // 先进行图片旋转
+      // 先進行圖片旋轉
       sharpedImage = await rotateImageBasedOnExif(sharpedImage, exif, metadata);
 
-      // 添加宽度和高度到 exifData
+      // 添加寬度和高度到 exifData
       exifData = {
         exif: exif?.exif
           ? {
@@ -277,12 +325,12 @@ export const convertToWebP = async (
   } else {
     resizeOptions = { height: maxEdge };
   }
-  // 转换为 WebP 并获取 buffer
+  // 轉換為 WebP 並獲取 buffer
   const webpBuffer = await sharpedImage
     .resize(resizeOptions)
     .webp({ quality: 80 })
     .toBuffer();
-  // 上传到 R2 时包含元数据
+  // 上傳到 R2 時包含元數據
   // console.log(`Processed image: ${filePath}`);
   const blurDataURL = await generateBlurDataUrl(sharpedImage);
   const src = `${process.env.R2_PUBLIC_URL}/${key}`;
@@ -363,9 +411,144 @@ export async function convertHeicToJpeg(inputBuffer: Buffer): Promise<Buffer> {
       format: "JPEG",
       quality: 90,
     });
+    // 處理返回的Buffer類型
+    if (jpegBuffer instanceof ArrayBuffer) {
+      return Buffer.from(jpegBuffer);
+    }
+    // 如果是Uint8Array或其他類型
     return Buffer.from(jpegBuffer);
   } catch (error) {
-    console.error("转换HEIC到JPEG时出错:", error);
+    console.error("轉換HEIC到JPEG時出錯:", error);
     throw error;
   }
 }
+
+// 检查视频文件是否存在于 R2
+async function getExistingVideoMetadata(key: string): Promise<RdVideo | null> {
+  try {
+    const headResult = (await s3Client.send(
+      new HeadObjectCommand({
+        Bucket: process.env.S3_BUCKET!,
+        Key: key,
+      })
+    )) as HeadObjectCommandOutput;
+
+    const metadata = headResult.Metadata;
+    if (metadata) {
+      return {
+        filename: path.basename(key),
+        src: `${process.env.R2_PUBLIC_URL}/${key}`,
+        slug: `${process.env.R2_PUBLIC_URL}/${key}`,
+        size: parseInt(metadata.size || "0"),
+        extension: metadata.extension || "",
+        mimeType: metadata.mimetype || "",
+        lastModified: metadata.lastmodified || "",
+      };
+    }
+    return null;
+  } catch (error) {
+    if (error instanceof NotFound) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+// 获取视频文件的 MIME 类型
+function getVideoMimeType(extension: string): string {
+  const mimeTypes: { [key: string]: string } = {
+    mp4: "video/mp4",
+    avi: "video/x-msvideo",
+    mov: "video/quicktime",
+    wmv: "video/x-ms-wmv",
+    flv: "video/x-flv",
+    webm: "video/webm",
+    mkv: "video/x-matroska",
+    m4v: "video/x-m4v",
+    "3gp": "video/3gpp",
+    ogv: "video/ogg",
+  };
+  return mimeTypes[extension.toLowerCase()] || "video/mp4";
+}
+
+// 上传视频文件到 R2
+export const uploadVideoToR2 = async (
+  inputPath: string,
+  slug: string,
+  file: string
+): Promise<RdVideo> => {
+  // 参数验证
+  if (!inputPath || typeof inputPath !== "string") {
+    throw new Error(`Invalid inputPath: ${inputPath}`);
+  }
+  if (!slug || typeof slug !== "string") {
+    throw new Error(`Invalid slug: ${slug}`);
+  }
+  if (!file || typeof file !== "string") {
+    throw new Error(`Invalid file: ${file}`);
+  }
+
+  const filePath = path.join(inputPath, file);
+  const extension = path.extname(file).toLowerCase().slice(1);
+
+  // 保持原始文件名和扩展名
+  const key = `${slug}/${file}`;
+  const mimeType = getVideoMimeType(extension);
+
+  console.log(`🎬 Uploading video: ${file} in ${inputPath} with slug: ${slug}`);
+
+  // 检查文件是否已存在于 R2
+  const existingMetadata = await getExistingVideoMetadata(key);
+  if (existingMetadata) {
+    console.log(`Video ${file} already exists in R2, skipping...`);
+    return existingMetadata;
+  }
+
+  let fileBuffer: Buffer;
+  try {
+    // 读取视频文件
+    fileBuffer = await fs.readFile(filePath);
+
+    // 获取文件统计信息
+    const stats = await fs.stat(filePath);
+
+    // 上传到 R2
+    await s3Client.send(
+      new PutObjectCommand({
+        Bucket: process.env.S3_BUCKET!,
+        Key: key,
+        Body: fileBuffer,
+        ContentType: mimeType,
+        Metadata: {
+          size: stats.size.toString(),
+          extension: extension,
+          mimetype: mimeType,
+          lastmodified: stats.mtime.toISOString(),
+          originalname: file,
+        },
+      })
+    );
+
+    const src = `${process.env.R2_PUBLIC_URL}/${key}`;
+    console.log(`✅ Uploaded video to R2: ${file} -> ${src}`);
+
+    return {
+      filename: file,
+      src: src,
+      slug: src,
+      size: stats.size,
+      extension: extension,
+      mimeType: mimeType,
+      lastModified: stats.mtime.toISOString(),
+    };
+  } catch (error) {
+    console.error(`❌ Failed to upload video ${file}:`, error);
+    throw error;
+  }
+};
+
+// 检查文件是否为支持的视频格式
+export const isVideoFile = (filename: string): boolean => {
+  const extension = path.extname(filename).toLowerCase().slice(1);
+  return supportedVideoFormats.includes(extension);
+};

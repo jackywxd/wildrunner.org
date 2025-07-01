@@ -9,90 +9,178 @@ import {
   convertImagesToWebP,
   convertToWebP,
   setFeaturedImages,
+  uploadVideoToR2,
+  isVideoFile,
 } from "@/lib/veliteUtils";
 import { projectRootPath, staticBasePath } from "@/base-path";
 
 const veliteRoot = "src/content";
+
 const processImages = () => async (tree: any, file: any) => {
   const traverse = async (node: any) => {
     if (node.type === "element" && node.properties?.src) {
       const src = node.properties.src;
-      if (!src.startsWith("http")) {
+      // 只处理图片，不处理视频
+      if (
+        !src.startsWith("http") &&
+        !src.startsWith("//") &&
+        !isVideoFile(src)
+      ) {
         try {
-          const filename = path.basename(src.replace("/static/", ""));
+          if (!file || !file.path) {
+            console.warn(`⚠️ Invalid file object for image: ${src}`);
+            return;
+          }
           const postDir = path.dirname(file.path);
-          const inputPath = path.join(postDir);
-
-          const slugParts = postDir.split(path.sep);
-          const slug = `${slugParts.slice(-3).join("/")}`;
-
-          console.log("Processing image:", {
-            filename,
-            inputPath,
-            slug,
-          });
-
+          let filename = path.basename(src);
+          let inputPath = postDir;
+          let actualImagePath: string;
+          if (src.startsWith("/static/")) {
+            actualImagePath = path.join(inputPath, filename);
+          } else if (src.startsWith("./")) {
+            const relativePath = src.replace("./", "");
+            filename = path.basename(relativePath);
+            actualImagePath = path.join(inputPath, relativePath);
+          } else if (src.startsWith("../")) {
+            filename = path.basename(src);
+            actualImagePath = path.resolve(inputPath, src);
+          } else if (!src.startsWith("/")) {
+            actualImagePath = path.join(inputPath, src);
+          } else {
+            actualImagePath = path.join(inputPath, filename);
+          }
+          if (!filename || !inputPath || !actualImagePath) {
+            console.warn(`⚠️ Invalid parameters for image processing: ${src}`, {
+              filename,
+              inputPath,
+              actualImagePath,
+            });
+            return;
+          }
+          try {
+            await fs.access(actualImagePath);
+          } catch (error) {
+            console.warn(
+              `⚠️ Image file not found: ${actualImagePath}, skipping...`
+            );
+            return;
+          }
+          const slugParts = path.dirname(file.path).split(path.sep);
+          const slug = slugParts.slice(-3).join("/");
+          if (!slug) {
+            console.warn(`⚠️ Invalid slug for image: ${src}`);
+            return;
+          }
           const image = await convertToWebP(inputPath, slug, filename);
-
-          // 创建新的属性对象，保留原有属性
-          const newProperties = {
-            ...node.properties,
-            src: image.src,
-            width: image.width,
-            height: image.height,
-            blurdataurl: image.blurDataURL,
-            loading: "lazy",
-            placeholder: "blur",
-          };
-
-          // 替换原有属性
-          node.properties = newProperties;
+          if (image && image.src) {
+            const newProperties = {
+              ...node.properties,
+              src: image.src,
+              width: image.width,
+              height: image.height,
+              blurdataurl: image.blurDataURL,
+              loading: "lazy",
+              placeholder: "blur",
+            };
+            node.properties = newProperties;
+          } else {
+            console.warn(`⚠️ Failed to get image data for: ${filename}`);
+          }
         } catch (error) {
-          console.error(`Failed to process image: ${src}`, error);
+          console.error(`❌ Failed to process inline image: ${src}`, error);
         }
+      } else if (src.startsWith("http") || src.startsWith("//")) {
+        // 跳过外部图片
       }
     }
-
-    if (node.children) {
+    if (node.children && Array.isArray(node.children)) {
       await Promise.all(node.children.map(traverse));
     }
   };
-
   await traverse(tree);
 };
+
+// 处理 MDX 内容中的视频文件
+const processVideosInMdx = async (
+  mdxContent: string,
+  inputPath: string,
+  slug: string
+) => {
+  // 支持 React 代码和 MDX 原始标签两种格式
+  // 1. React 代码格式
+  const reactVideoRegex = /l\("video",\{[^}]*src:["']([^"']+)["'][^}]*\}/g;
+  let processedContent = mdxContent;
+  let reactMatch;
+  while ((reactMatch = reactVideoRegex.exec(mdxContent)) !== null) {
+    const videoSrc = reactMatch[1];
+    const filename = path.basename(videoSrc);
+    if (isVideoFile(filename)) {
+      try {
+        const videoInfo = await uploadVideoToR2(inputPath, slug, filename);
+        if (videoInfo && videoInfo.src) {
+          const escapedSrc = videoSrc.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          const newRegex = new RegExp(`src:["']${escapedSrc}["']`, "g");
+          processedContent = processedContent.replace(
+            newRegex,
+            `src:\"${videoInfo.src}\"`
+          );
+        }
+      } catch (error) {
+        console.error(`Failed to process React video: ${videoSrc}`, error);
+      }
+    }
+  }
+  // 2. MDX 原始标签格式
+  const videoRegex = /<video[^>]*src=["']([^"']+)["'][^>]*>/g;
+  let match;
+  while ((match = videoRegex.exec(mdxContent)) !== null) {
+    const videoSrc = match[1];
+    const filename = path.basename(videoSrc);
+    if (isVideoFile(filename)) {
+      try {
+        const videoInfo = await uploadVideoToR2(inputPath, slug, filename);
+        if (videoInfo && videoInfo.src) {
+          const escapedSrc = videoSrc.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          const newRegex = new RegExp(`src=["']${escapedSrc}["']`, "g");
+          processedContent = processedContent.replace(
+            newRegex,
+            `src=\"${videoInfo.src}\"`
+          );
+        }
+      } catch (error) {
+        console.error(`Failed to process MDX video: ${videoSrc}`, error);
+      }
+    }
+  }
+  return processedContent;
+};
+
 const computedFields = async <
-  T extends { slug: string; title: string; image?: Image },
+  T extends { slug: string; title: string; image?: Image; body?: string },
   K extends { meta: { data: any } },
 >(
   data: T,
   { meta }: K
 ) => {
-  // console.log("computedFields", data);
-  // console.log("computedFields meta", meta.data.data.image);
-  const file = meta.data.data.image;
+  const file = meta.data?.data?.image;
   const inputPath = path.join(projectRootPath, veliteRoot, data.slug);
-
-  // const outputPath = path.join(staticBasePath, "images", data.slug);
-
-  // covert images to webp
-  // await fs
-  //   .mkdir(outputPath, { recursive: true })
-  //   .then(() => console.log(`Directory '${outputPath}' created.`))
-  //   .catch((err) => console.error(`Error creating directory: ${err.message}`));
-
-  const image = await convertToWebP(inputPath, data.slug, file);
-
-  if (image) {
-    // console.log("computedFields image", image);
-    // replace the image in data to the new webp image
-    data.image = image;
+  if (file) {
+    const image = await convertToWebP(inputPath, data.slug, file);
+    if (image) {
+      data.image = image;
+    }
   }
-
+  // 处理 MDX 内容中的视频文件
+  if (data.body) {
+    try {
+      data.body = await processVideosInMdx(data.body, inputPath, data.slug);
+    } catch (error) {
+      console.error(`Error processing videos in MDX: ${data.slug}`, error);
+    }
+  }
   return {
     ...data,
-    year: data.slug.split("/")
-      ? data.slug.split("/")[1]
-      : new Date().getFullYear().toString(),
+    year: data.slug.split("/")[1] || new Date().getFullYear().toString(),
     slugAsParams: data.slug.split("/").slice(1).join("/"),
   };
 };
@@ -102,7 +190,8 @@ const globals = {
   pattern: "globals/*.json",
   single: true,
   schema: s.object({
-    heroTitle: s.string().default("歡迎來到野馬營."),
+    heroTitleEn: s.string().default("Run wild, run free."),
+    heroTitleZh: s.string().default("心如野馬，馳騁天下"),
     metadata: s.object({
       title: s
         .object({ default: s.string(), template: s.string() })
@@ -145,25 +234,6 @@ const globals = {
     ),
   }),
 };
-
-const races = defineCollection({
-  name: "Races",
-  pattern: "races/**/*.mdx",
-  schema: s
-    .object({
-      slug: s.path(),
-      title: s.string().max(99),
-      description: s.string().max(999),
-      date: s.isodate(),
-      published: s.boolean().default(false),
-      image: s.image().optional(),
-      author: s.string(),
-      body: s.mdx({
-        rehypePlugins: [processImages],
-      }),
-    })
-    .transform(computedFields),
-});
 
 const galleries = defineCollection({
   name: "Gallery",
@@ -227,10 +297,10 @@ const posts = defineCollection({
       const transformedData = await computedFields(data, meta);
       return {
         ...transformedData,
-        images: await convertImagesToWebP(
-          path.join(projectRootPath, veliteRoot, data.path),
-          path.join(data.path)
-        ),
+        // images: await convertImagesToWebP(
+        //   path.join(projectRootPath, veliteRoot, data.path),
+        //   path.join(data.path)
+        // ),
       };
     }),
 });
@@ -258,10 +328,37 @@ export default defineConfig({
   output: {
     data: ".velite",
     assets: "public/static",
+    base: "/static/",
     name: "[name].[ext]",
     clean: true,
   },
-  collections: { races, posts, galleries, authors, globals },
+  collections: { posts, galleries, authors, globals },
+  complete: async (data, context) => {
+    // 检查必要的环境变量
+    const requiredEnvVars = [
+      "R2_PUBLIC_URL",
+      "S3_ENDPOINT",
+      "S3_ACCESS_KEY_ID",
+      "S3_SECRET_ACCESS_KEY",
+      "S3_BUCKET",
+    ];
+
+    const missingVars = requiredEnvVars.filter(
+      (varName) => !process.env[varName]
+    );
+    if (missingVars.length > 0) {
+      console.warn(`⚠️ 缺少环境变量: ${missingVars.join(", ")}`);
+      console.warn("请确保设置了所有必要的R2配置环境变量");
+    }
+
+    console.log("✅ Velite 构建完成，所有图片已上传到 Cloudflare R2");
+    console.log(`📊 处理了 ${data.posts?.length || 0} 篇文章`);
+    console.log(`🖼️ 处理了 ${data.galleries?.length || 0} 个图库`);
+
+    if (process.env.R2_PUBLIC_URL) {
+      console.log(`🌍 R2 公共 URL: ${process.env.R2_PUBLIC_URL}`);
+    }
+  },
   mdx: {
     rehypePlugins: [
       rehypeSlug as any,
