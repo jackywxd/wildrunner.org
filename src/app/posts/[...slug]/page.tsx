@@ -52,7 +52,7 @@ export async function generateMetadata({
       title: newTitle,
       description,
       type: "article",
-      url: `${baseURL}/posts/${post.slug}`,
+      url: `${baseURL}/${post.slug}`,
       images: [
         {
           url: ogImage,
