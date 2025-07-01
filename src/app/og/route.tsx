@@ -16,7 +16,6 @@ export async function GET(request: Request) {
   // we also need to decode the title to avoid encoding issues
   title = decodeURIComponent(title);
 
-  console.log(title);
   return new ImageResponse(
     (
       <div

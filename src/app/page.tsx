@@ -1,11 +1,12 @@
 import Link from "next/link";
 
-import { races, galleries, posts } from "#site/content";
+import { galleries, posts } from "#site/content";
 import Marquee from "@/components/magicui/Marquee";
 import PhotoCard from "@/components/PhotoCard";
 import { siteConfig } from "@/config/site";
 import { RdPhoto } from "@/lib/veliteUtils";
 import Races from "@/components/races";
+import { globals } from "#site/content";
 
 export function generateMetadata() {
   const title = siteConfig.title;
@@ -76,10 +77,10 @@ export default function Home() {
           ))} */}
           </div>
           <h1 className="text-3xl capitalize sm:text-5xl md:text-6xl lg:text-7xl">
-            {siteConfig.slogan}
+            {globals.heroTitleZh}
           </h1>
           <h1 className="text-primary text-3xl capitalize sm:text-5xl md:text-6xl lg:text-7xl">
-            Run wild, run free. <br></br>
+            {globals.heroTitleEn} <br></br>
           </h1>
           {/* <p className="max-w-2xl leading-normal text-muted-foreground md:text-2xl sm:text-xl sm:leading-8">
             {siteConfig.description}
@@ -94,9 +95,9 @@ export default function Home() {
           <section>
             <Races
               allRaces={
-                filteredPosts.length < 3
+                filteredPosts.length < 8
                   ? filteredPosts
-                  : filteredPosts.splice(0, 2)
+                  : filteredPosts.splice(0, 8)
               }
             />
           </section>
@@ -106,15 +107,6 @@ export default function Home() {
       <h2 className="text-l capitalize sm:text-xl md:text-2xl lg:text-3xl text-center">
         Latest Races
       </h2>
-      <section>
-        <Races
-          allRaces={races
-            .sort(
-              (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-            )
-            .filter((race) => race.published)}
-        />
-      </section>
       {featuredImages?.length > 0 && (
         <div
           key="card-container-gallery"

@@ -1,9 +1,8 @@
 import { Icons } from "@/components/icons";
 import { siteConfig } from "@/config/site";
-import { Bot, Rss, Image, Flag } from "lucide-react";
+import { Bot, Rss, Image } from "lucide-react";
 
 export const NAV_LIST = [
-  { label: "賽事", path: "/races", icon: Flag },
   { label: "文章", path: "/posts", icon: Rss },
   { label: "相冊", path: "/gallery", icon: Image },
   { label: "關於", path: "/about", icon: Bot },

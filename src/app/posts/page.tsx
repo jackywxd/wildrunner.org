@@ -71,11 +71,11 @@ export default function BlogPage() {
               <h2 className="text-2xl font-extrabold text-primary">
                 {blog.title}
               </h2>
+              <p className="text-muted-foreground underline font-bold">
+                {blog.author}
+              </p>
               {blog.description && (
                 <p className="text-muted-foreground">{blog.description}</p>
-              )}
-              {blog.author && (
-                <p className="text-muted-foreground">{blog.author}</p>
               )}
               {blog.date && (
                 <p className="text-sm text-muted-foreground">
