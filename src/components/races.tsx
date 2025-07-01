@@ -1,11 +1,11 @@
 import React from "react";
-import { races } from "#site/content";
+import { posts } from "#site/content";
 import Image from "next/image";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import { Pencil } from "lucide-react"; // Example from lucide-react
 
-export default function Races({ allRaces }: { allRaces: typeof races }) {
+export default function Races({ allRaces }: { allRaces: typeof posts }) {
   const rs = allRaces.sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
