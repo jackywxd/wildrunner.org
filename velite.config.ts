@@ -293,8 +293,9 @@ const posts = defineCollection({
       metadata: s.metadata(), // extract markdown reading-time, word-count, etc.
     })
     .transform(async (data, meta) => {
-      // 首先处理主图片（如果存在）
-      const transformedData = await computedFields(data, meta);
+      const transformedData = await computedFields(data, {
+        meta: { data: meta },
+      });
       return {
         ...transformedData,
         // images: await convertImagesToWebP(

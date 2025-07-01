@@ -407,7 +407,10 @@ export const setFeaturedImages = (
 export async function convertHeicToJpeg(inputBuffer: Buffer): Promise<Buffer> {
   try {
     const jpegBuffer = await heicConvert({
-      buffer: inputBuffer,
+      buffer: inputBuffer.buffer.slice(
+        inputBuffer.byteOffset,
+        inputBuffer.byteOffset + inputBuffer.byteLength
+      ),
       format: "JPEG",
       quality: 90,
     });
