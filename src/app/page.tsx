@@ -104,13 +104,10 @@ export default function Home() {
         </>
       )}
 
-      <h2 className="text-l capitalize sm:text-xl md:text-2xl lg:text-3xl text-center">
-        Latest Races
-      </h2>
       {featuredImages?.length > 0 && (
         <div
           key="card-container-gallery"
-          className="rd-card flex flex-col pt-4 px-4 pb-3 -mx-4 h-[135px]"
+          className="rd-card flex flex-col pt-4 px-4 pb-3 -mx-4 h-[135px] mt-10"
         >
           <div className="absolute inset-0 gradient-blur h-full w-[200px] -z-40" />
           <Link href="/gallery" className="relative prose-article-card">
