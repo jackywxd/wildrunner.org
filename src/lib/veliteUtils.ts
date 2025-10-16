@@ -236,14 +236,14 @@ export const convertToWebP = async (
   const outputFileName = `${path.basename(file, path.extname(file))}.webp`;
   const key = `${slug}/${outputFileName}`;
 
-  console.log(
-    `🔄 Converting image: ${file} in ${inputPath} with slug: ${slug}`
-  );
+  // console.log(
+  //   `🔄 Converting image: ${file} in ${inputPath} with slug: ${slug}`
+  // );
 
   // 檢查文件是否存在並獲取元數據
   const existingMetadata = await getExistingImageMetadata(key);
   if (existingMetadata) {
-    console.log(`File ${outputFileName} already exists in R2, skipping...`);
+    // console.log(`File ${outputFileName} already exists in R2, skipping...`);
     return existingMetadata;
   }
   let fileBuffer: Buffer;
@@ -256,7 +256,7 @@ export const convertToWebP = async (
       fileBuffer = await convertHeicToJpeg(fileBuffer);
     }
   } catch (e) {
-    console.log(`讀取文件 ${filePath} 時出錯:`, e);
+    console.error(`讀取文件 ${filePath} 時出錯:`, e);
     // get the extension of the file
     const ext = path.extname(file);
     // change ext to uppercase
@@ -353,7 +353,7 @@ export const convertToWebP = async (
       },
     })
   );
-  console.log(`Uploaded to R2: ${file} -> ${src}`);
+  // console.log(`Uploaded to R2: ${file} -> ${src}`);
 
   return {
     filename: file,
@@ -374,8 +374,8 @@ export const convertImagesToWebP = async (
   inputPath: string,
   outputPath: string
 ) => {
-  console.log("inputPath", inputPath);
-  console.log("outputPath", outputPath);
+  // console.log("inputPath", inputPath);
+  // console.log("outputPath", outputPath);
   const imageFiles = await getImageFiles(inputPath);
   const images: RdPhoto[] = [];
 
@@ -498,7 +498,7 @@ export const uploadVideoToR2 = async (
   const key = `${slug}/${file}`;
   const mimeType = getVideoMimeType(extension);
 
-  console.log(`🎬 Uploading video: ${file} in ${inputPath} with slug: ${slug}`);
+  // console.log(`🎬 Uploading video: ${file} in ${inputPath} with slug: ${slug}`);
 
   // 检查文件是否已存在于 R2
   const existingMetadata = await getExistingVideoMetadata(key);

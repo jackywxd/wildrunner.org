@@ -156,15 +156,19 @@ const processVideosInMdx = async (
 };
 
 const computedFields = async <
-  T extends { slug: string; title: string; image?: Image; body?: string },
-  K extends { meta: { data: any } },
+  T extends {
+    slug: string;
+    title: string;
+    image?: Image;
+    body?: string;
+  },
 >(
-  data: T,
-  { meta }: K
+  data: T
 ) => {
-  const file = meta.data?.data?.image;
+  const file = data?.image?.src.split("/").pop();
   const inputPath = path.join(projectRootPath, veliteRoot, data.slug);
-  if (file) {
+  if (file && inputPath) {
+    console.log("uploading image to r2", file);
     const image = await convertToWebP(inputPath, data.slug, file);
     if (image) {
       data.image = image;
@@ -292,16 +296,10 @@ const posts = defineCollection({
       description: s.string().max(999),
       metadata: s.metadata(), // extract markdown reading-time, word-count, etc.
     })
-    .transform(async (data, meta) => {
-      const transformedData = await computedFields(data, {
-        meta: { data: meta },
-      });
+    .transform(async (data) => {
+      const transformedData = await computedFields(data);
       return {
         ...transformedData,
-        // images: await convertImagesToWebP(
-        //   path.join(projectRootPath, veliteRoot, data.path),
-        //   path.join(data.path)
-        // ),
       };
     }),
 });
