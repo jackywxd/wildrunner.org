@@ -2,8 +2,7 @@ import { build } from "velite";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
-  staticPageGenerationTimeout: 600, // Increase to 120 seconds
+  staticPageGenerationTimeout: 600, // Increase to 600 seconds
   images: {
     formats: ["image/webp", "image/avif"],
     deviceSizes: [162, 322, 482, 642, 1026, 1282, 1922, 3842],
@@ -43,21 +42,21 @@ const nextConfig = {
     ];
   },
   webpack: (config) => {
-    // config.plugins.push(new VeliteWebpackPlugin());
+    config.plugins.push(new VeliteWebpackPlugin());
     return config;
   },
 };
 
-// class VeliteWebpackPlugin {
-//   static started = false;
-//   apply(/** @type {import('webpack').Compiler} */ compiler) {
-//     compiler.hooks.beforeCompile.tapPromise("VeliteWebpackPlugin", async () => {
-//       if (VeliteWebpackPlugin.started) return;
-//       VeliteWebpackPlugin.started = true;
-//       const dev = compiler.options.mode === "development";
-//       await build({ watch: dev, clean: !dev });
-//     });
-//   }
-// }
+class VeliteWebpackPlugin {
+  static started = false;
+  apply(/** @type {import('webpack').Compiler} */ compiler) {
+    compiler.hooks.beforeCompile.tapPromise("VeliteWebpackPlugin", async () => {
+      if (VeliteWebpackPlugin.started) return;
+      VeliteWebpackPlugin.started = true;
+      const dev = compiler.options.mode === "development";
+      await build({ watch: dev, clean: !dev });
+    });
+  }
+}
 
 export default nextConfig;
