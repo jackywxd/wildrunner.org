@@ -32,13 +32,14 @@ export function generateMetadata(): Metadata {
   };
 }
 
-const Layout: React.FC<{
+export default function Layout({
+  children,
+}: {
   children: React.ReactNode;
-  params: Promise<{ slug: string }>;
-}> = async ({ children, params }) => {
+}) {
   return (
     <div className="container relative max-w-7xl py-6 lg:py-10">{children}</div>
   );
-};
+}
 
-export default Layout;
+
